@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Locataire - RentMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ===== BODY ===== */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    display: flex;
+    min-height: 100vh;
+    background: #f4f6f9;
+    color: #1b263b;
+}
+
+/* ===== SIDEBAR ===== */
+
+aside {
+    position: fixed;   /* 🔥 rend le sidebar fixe */
+    top: 0;
+    left: 0;
+    width: 180px;
+    height: 100vh;     /* 🔥 prend toute la hauteur */
+    background: linear-gradient(to bottom, #2e21e6, #40affe, #85c1e9);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 10px;
+}
+
+aside img.logo {
+    width: 50px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+aside a {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    padding: 8px;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+
+aside a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+aside a:hover {
+    background: rgba(255,255,255,0.2);
+    color: #ffd700;
+}
+
+/* ===== MAIN ===== */
+main {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    position: relative;
+
+    margin-left: 180px; /* 🔥 espace pour le sidebar */
+}
+
+/* ===== HEADER ===== */
+header {
+    background: linear-gradient(90deg, #0c0384, #3f31fc, #2c6ff5, #030664);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 1.6em;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .top-icons i {
+    font-size: 1.3em;
+    margin-left: 20px;
+    cursor: pointer;
+    position: relative;
+    transition: 0.3s;
+}
+
+header .top-icons i:hover { color: #ffd700; }
+
+header .top-icons .badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background: red;
+    color: white;
+    font-size: 0.7em;
+    padding: 2px 5px;
+    border-radius: 50%;
+}
+
+/* ===== CALENDAR BUTTON ===== */
+#calendarBtn {
+    background: #2563eb;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: 0.3s;
+}
+
+#calendarBtn:hover { background: #1e40af; }
+
+/* ===== WELCOME & INFO ===== */
+#welcome {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+.info-text {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* Bouton payer */
+.btn {
+    margin: 30px auto; /* 🔥 centre horizontalement */
+    display: block;    /* 🔥 obligatoire pour margin auto */
+    width: 250px;      /* 🔥 largeur fixe */
+    
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(to right, #2563eb, #38bdf8);
+    color: white;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.btn i {
+    margin-right: 8px;
+}
+
+.btn:hover {
+    background: linear-gradient(to right, #1e40af, #2563eb);
+    transform: scale(1.03);
+}
+/* ===== CARDS ===== */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+    padding: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.card h3 {
+    font-size: 1em;
+    color: #7f8c8d;
+    margin-bottom: 6px;
+}
+
+.card p {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0;
+}
+
+.card p.red { color: red; }
+.card p.green { color: green; }
+.quick-access .quick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f3f6ff;
+    border: 1px solid #cbd5f5;
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 14px;
+    color: #2563eb;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 120px;
+}
+
+.quick-access .quick-btn i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.quick-access .quick-btn:hover {
+    background: #2563eb;
+    color: white;
+    transform: translateY(-3px);
+}
+
+
+
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:900px){
+    aside { width: 60px; padding: 10px; }
+    aside img.logo { display: none; }
+    aside a { justify-content: center; font-size: 0.8em; }
+    main { padding: 15px; margin-left: 0; }
+    .cards { grid-template-columns: 1fr; }
+    footer { width: 100%; margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <img src="logo.png" alt="Logo RentMaster" class="logo">
+  <a href="dashboard_locataire.html"><i class="fas fa-home"></i>Dashboard</a>
+  <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i>Contrat</a>
+  <a href="paiement_locataire.html"><i class="fas fa-credit-card"></i>Paiement</a>
+  <a href="historique.html"><i class="fas fa-history"></i>Historique</a>
+  <a href="profil_locataire.html"><i class="fas fa-user"></i>Profil</a>
+  <a href="index.html"><i class="fas fa-sign-out-alt"></i>Déconnexion</a>
+</aside>
+
+<main>
+<header>
+    <span>Dashboard Locataire</span>
+    <span class="top-icons">
+        <i class="fas fa-envelope"><span class="badge" id="msgBadge">0</span></i>
+        <i class="fas fa-bell"><span class="badge" id="notifBadge">0</span></i>
+    </span>
+</header>
+
+<!-- Calendrier -->
+<button id="calendarBtn" onclick="window.location.href='calendrier_locataire.html'">
+    <i class="fas fa-calendar-alt"></i> Calendrier
+</button>
+
+<!-- Bienvenue & info -->
+<div id="welcome"></div>
+
+<div class="info-text">
+    Bienvenue sur votre dashboard ! Consultez régulièrement vos informations pour suivre le statut de vos paiements, les échéances de votre loyer et rester à jour avec vos notifications importantes.
+</div>
+
+<!-- Informations -->
+<!-- Informations -->
+<div class="cards">
+  <div class="card">
+    <h3>Loyer à payer</h3>
+    <p>500$</p>
+  </div>
+
+  <div class="card">
+    <h3>Prochaine échéance</h3>
+    <p>05 Avril 2026</p>
+  </div>
+
+  <div class="card">
+    <h3>Statut</h3>
+    <p class="red">Non payé</p>
+  </div>
+</div>
+
+<!-- Bouton Payer -->
+<button class="btn" onclick="window.location.href='paiement_locataire.html'">
+    <i class="fas fa-credit-card"></i> Payer maintenant
+</button>
+
+<!-- Section accès rapide -->
+<div class="quick-access" style="display:flex; justify-content:space-around; margin:30px 0;">
+    <button class="quick-btn" onclick="window.location.href='message_locataire.html'">
+        <i class="fas fa-envelope"></i><br>Messages
+    </button>
+    <button class="quick-btn" onclick="window.location.href='notification_locataire.html'">
+        <i class="fas fa-bell"></i><br>Notifications
+    </button>
+    <button class="quick-btn" onclick="window.location.href='guide.html'">
+        <i class="fas fa-book"></i><br>Guide
+    </button>
+</div>
+
+<!-- Footer -->
+<footer style="text-align:center; padding:20px; background:#f0f2f5; border-top:1px solid #ddd; color:#1b263b; margin-top:50px;">
+    <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
+  <p>
+    Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> | 
+    Portfolio : <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Mon Portfolio</a>
+  </p>
+</footer>
+
+<script>
+// sécurité
+if (localStorage.getItem("connecte") !== "true") {
+    window.location.href = "login.html";
+}
+
+// récupérer locataire
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let userId = localStorage.getItem("userId");
+let locataire = locataires.find(l => l.id == userId);
+
+// bienvenue
+document.getElementById("welcome").innerText =
+  locataire ? `Bonjour ${locataire.nom}, bienvenue sur votre tableau de bord` : "Bonjour";
+
+// badges
+let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+let messages = JSON.parse(localStorage.getItem("messages")) || [];
+
+document.getElementById("notifBadge").innerText = notifications.length || 0;
+document.getElementById("msgBadge").innerText = messages.length || 0;
+</script>
+
+</body>
+</html>

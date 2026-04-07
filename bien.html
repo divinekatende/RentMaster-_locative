@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des Biens - RentMaster</title>
+<link rel="stylesheet" href="bien.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="logo.png" alt="Logo RentMaster">
+      <h2>RentMaster</h2>
+    </div>
+    <nav>
+      <a href="dashboard.html"><i class="fa fa-home"></i> Dashboard</a>
+      <a href="bien.html" class="active"><i class="fa fa-building"></i> Biens</a>
+      <a href="locataire.html"><i class="fa fa-users"></i> Locataires</a>
+      <a href="contrat.html"><i class="fa fa-file-contract"></i> Contrats</a>
+      <a href="paiement.html"><i class="fa fa-credit-card"></i> Paiements</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1>Gestion des Biens</h1>
+      <p>Ajoutez, modifiez ou supprimez vos biens facilement. Chaque bien peut avoir une image d'identité.</p>
+    </div>
+
+    <div class="actions-top">
+      <input type="text" id="searchInput" placeholder="Rechercher : Nom, Adresse, Statut" onkeyup="filtrerBiens()">
+      <button onclick="document.getElementById('formAjout').style.display='block'"><i class="fa fa-plus"></i> Ajouter un bien</button>
+    </div>
+
+    <table id="tableBiens">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Image</th>
+          <th>Nom</th>
+          <th>Adresse</th>
+          <th>Type</th>
+          <th>Surface (m²)</th>
+          <th>Pièces</th>
+          <th>Loyer ($)</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- FORMULAIRE MODAL -->
+    <div id="formAjout" class="form-modal">
+      <h2 id="formTitle">Ajouter un bien</h2>
+
+      <label>Image d'identité du bien :</label>
+      <input type="file" id="imageBien" accept="image/*">
+
+      <label>Nom :</label>
+      <input type="text" id="nomBien" placeholder="Ex: Appartement centre-ville">
+
+      <label>Adresse :</label>
+      <input type="text" id="adresseBien" placeholder="Ex: 12 rue du Marché">
+
+      <label>Type :</label>
+      <select id="typeBien">
+        <option value="Appartement">Appartement</option>
+        <option value="Maison">Maison</option>
+        <option value="Studio">Studio</option>
+        <option value="Bureau">Bureau</option>
+      </select>
+
+      <label>Surface (m²) :</label>
+      <input type="number" id="surfaceBien" placeholder="Ex: 80">
+
+      <label>Nombre de pièces :</label>
+      <input type="number" id="piecesBien" placeholder="Ex: 3">
+
+      <label>Loyer ($) :</label>
+      <input type="number" id="loyerBien" placeholder="Ex: 450">
+
+      <label>Statut :</label>
+      <select id="statutBien">
+        <option value="Disponible">Disponible</option>
+        <option value="Loué">Loué</option>
+        <option value="Maintenance">Maintenance</option>
+      </select>
+
+      <label>Description / équipements :</label>
+      <textarea id="descBien" rows="3" placeholder="Ex: Balcon, piscine, parking"></textarea>
+
+      <div class="btn-group">
+        <button id="btnAjouter" onclick="ajouterBien()"><i class="fa fa-save"></i> Ajouter</button>
+        <button onclick="annulerForm()"><i class="fa fa-times"></i> Annuler</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer>
+  <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
+  <p>
+    Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> | 
+    Portfolio : <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Mon Portfolio</a>
+  </p>
+</footer>
+
+<script>
+let biens = JSON.parse(localStorage.getItem("biens")) || [];
+let editIndex = -1;
+
+function afficherBiens() {
+  const table = document.querySelector('#tableBiens tbody');
+  table.innerHTML = "";
+  biens.forEach((bien, index) => {
+    const row = table.insertRow();
+    row.insertCell(0).innerText = bien.id;
+    row.insertCell(1).innerHTML = bien.photos ? `<img src="${bien.photos[0]}" class="identite">` : '';
+    row.insertCell(2).innerText = bien.nom;
+    row.insertCell(3).innerText = bien.adresse;
+    row.insertCell(4).innerText = bien.type;
+    row.insertCell(5).innerText = bien.surface;
+    row.insertCell(6).innerText = bien.pieces;
+    row.insertCell(7).innerText = bien.loyer;
+    const statutCell = row.insertCell(8);
+    statutCell.innerText = bien.statut;
+    statutCell.className = bien.statut === "Disponible" ? "vacant" : bien.statut === "Loué" ? "loue" : "maintenance";
+    const actionsCell = row.insertCell(9);
+    actionsCell.innerHTML = `<button onclick="modifierBien(${index})"><i class="fa fa-edit"></i></button>
+                             <button onclick="supprimerBien(${index})"><i class="fa fa-trash"></i></button>`;
+  });
+}
+
+function ajouterBien() {
+  const nom = document.getElementById('nomBien').value;
+  const adresse = document.getElementById('adresseBien').value;
+  const type = document.getElementById('typeBien').value;
+  const surface = document.getElementById('surfaceBien').value;
+  const pieces = document.getElementById('piecesBien').value;
+  const loyer = document.getElementById('loyerBien').value;
+  const statut = document.getElementById('statutBien').value;
+  const desc = document.getElementById('descBien').value;
+  const file = document.getElementById('imageBien').files[0];
+
+  if(!nom || !adresse || !surface || !pieces || !loyer) { alert("Remplis tous les champs obligatoires !"); return; }
+
+  const ajouterOuModifier = (imgData) => {
+    if(editIndex >= 0) {
+      biens[editIndex] = {...biens[editIndex], nom, adresse, type, surface, pieces, loyer, statut, description: desc, photos: imgData ? [imgData] : biens[editIndex].photos};
+      editIndex = -1;
+    } else {
+      const newBien = { id: biens.length + 1, nom, adresse, type, surface, pieces, loyer, statut, description: desc, photos: imgData ? [imgData] : [] };
+      biens.push(newBien);
+    }
+    localStorage.setItem("biens", JSON.stringify(biens));
+    afficherBiens();
+    annulerForm();
+  }
+
+  if(file){
+    const reader = new FileReader();
+    reader.onload = e => ajouterOuModifier(e.target.result);
+    reader.readAsDataURL(file);
+  } else {
+    ajouterOuModifier();
+  }
+}
+
+function modifierBien(index) {
+  editIndex = index;
+  const bien = biens[index];
+  document.getElementById('nomBien').value = bien.nom;
+  document.getElementById('adresseBien').value = bien.adresse;
+  document.getElementById('typeBien').value = bien.type;
+  document.getElementById('surfaceBien').value = bien.surface;
+  document.getElementById('piecesBien').value = bien.pieces;
+  document.getElementById('loyerBien').value = bien.loyer;
+  document.getElementById('statutBien').value = bien.statut;
+  document.getElementById('descBien').value = bien.description || '';
+  document.getElementById('formTitle').innerText = "Modifier un bien";
+  document.getElementById('btnAjouter').innerText = "Enregistrer";
+  document.getElementById('formAjout').style.display='block';
+}
+
+function supprimerBien(index) {
+  if(confirm("Voulez-vous vraiment supprimer ce bien ?")) {
+    biens.splice(index,1);
+    localStorage.setItem("biens", JSON.stringify(biens));
+    afficherBiens();
+  }
+}
+
+function annulerForm() {
+  document.getElementById('formAjout').style.display='none';
+  document.getElementById('nomBien').value='';
+  document.getElementById('adresseBien').value='';
+  document.getElementById('typeBien').value='Appartement';
+  document.getElementById('surfaceBien').value='';
+  document.getElementById('piecesBien').value='';
+  document.getElementById('loyerBien').value='';
+  document.getElementById('statutBien').value='Disponible';
+  document.getElementById('descBien').value='';
+  document.getElementById('imageBien').value='';
+  editIndex=-1;
+  document.getElementById('btnAjouter').innerText="Ajouter";
+  document.getElementById('formTitle').innerText="Ajouter un bien";
+}
+
+function filtrerBiens() {
+  const filtre = document.getElementById('searchInput').value.toLowerCase();
+  const table = document.querySelector('#tableBiens tbody');
+  table.innerHTML = "";
+  biens.forEach((bien, index) => {
+    if(bien.nom.toLowerCase().includes(filtre) || bien.adresse.toLowerCase().includes(filtre) || bien.statut.toLowerCase().includes(filtre)) {
+      const row = table.insertRow();
+      row.insertCell(0).innerText = bien.id;
+      row.insertCell(1).innerHTML = bien.photos ? `<img src="${bien.photos[0]}" class="identite">` : '';
+      row.insertCell(2).innerText = bien.nom;
+      row.insertCell(3).innerText = bien.adresse;
+      row.insertCell(4).innerText = bien.type;
+      row.insertCell(5).innerText = bien.surface;
+      row.insertCell(6).innerText = bien.pieces;
+      row.insertCell(7).innerText = bien.loyer;
+      const statutCell = row.insertCell(8);
+      statutCell.innerText = bien.statut;
+      statutCell.className = bien.statut === "Disponible" ? "vacant" : bien.statut === "Loué" ? "loue" : "maintenance";
+      const actionsCell = row.insertCell(9);
+      actionsCell.innerHTML = `<button onclick="modifierBien(${index})"><i class="fa fa-edit"></i></button>
+                               <button onclick="supprimerBien(${index})"><i class="fa fa-trash"></i></button>`;
+    }
+  });
+}
+
+afficherBiens();
+</script>
+
+</body>
+</html>

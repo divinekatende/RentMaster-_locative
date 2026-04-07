@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historique - RentMaster</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f4f7fb;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+h1 {
+  margin-bottom: 20px;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.top-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+th {
+  background: #eaf1ff;
+  font-weight: 600;
+}
+tr:hover {
+  background: #f0f4ff;
+}
+.btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+.btn-danger {
+  background: #f87171;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #dc2626;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-actions">
+    <h1><i class="fa fa-clock"></i> Historique des actions</h1>
+    <button class="btn btn-primary" onclick="window.location='dashboard.html'">
+      <i class="fa fa-arrow-left"></i> Retour au Dashboard
+    </button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th>Date</th>
+        <th>Supprimer</th>
+      </tr>
+    </thead>
+    <tbody id="historyTable"></tbody>
+  </table>
+</div>
+
+<script>
+function loadHistory(){
+  const history = JSON.parse(localStorage.getItem("history")) || [];
+  const tbody = document.getElementById("historyTable");
+  tbody.innerHTML="";
+
+  history.forEach((item,index)=>{
+    let row = tbody.insertRow();
+    row.insertCell(0).innerText = item.action;
+    row.insertCell(1).innerText = item.date;
+    let delCell = row.insertCell(2);
+    let btn = document.createElement("button");
+    btn.innerHTML = '<i class="fa fa-trash"></i>';
+    btn.className = "btn btn-danger";
+    btn.title = "Supprimer cette action";
+    btn.onclick = ()=>{
+      if(confirm("Voulez-vous vraiment supprimer cette action ?")){
+        history.splice(index,1);
+        localStorage.setItem("history",JSON.stringify(history));
+        loadHistory();
+      }
+    };
+    delCell.appendChild(btn);
+  });
+}
+
+window.onload = loadHistory;
+</script>
+</body>
+</html>

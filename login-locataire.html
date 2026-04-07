@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion Locataire - RentMaster</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <header>
+        <img src="logo.png" alt="Logo RentMaster" class="logo">
+        <h1>RentMaster</h1>
+    </header>
+
+    <main class="form-container">
+        <h2>Connexion Locataire</h2>
+        <form onsubmit="connexion(event)">
+            <input type="text" id="matricule" placeholder="Matricule" required>
+            <input type="password" id="password" placeholder="Mot de passe" required>
+            <button type="submit" class="btn">Se connecter</button>
+        </form>
+        <p><a href="index.html">Retour à l'accueil</a></p>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
+    </footer>
+
+    <script src="init.js"></script>
+    <script>
+    function connexion(event) {
+        event.preventDefault();
+
+        let matricule = document.getElementById("matricule").value;
+        let password = document.getElementById("password").value;
+        let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+
+        let utilisateur = locataires.find(l => l.matricule === matricule && l.password === password);
+
+        if (utilisateur) {
+            localStorage.setItem("connecte", "true");
+            localStorage.setItem("userId", utilisateur.id);
+            window.location.href = "dashboard_locataire.html";
+        } else {
+            alert("Matricule ou mot de passe incorrect !");
+        }
+    }
+    </script>
+</body>
+</html>

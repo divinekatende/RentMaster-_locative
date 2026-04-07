@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mon Contrat - RentMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* --- RESET ET BASE --- */
+* {
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI', sans-serif;
+}
+
+body {
+  background:#f0f2f5;
+}
+
+/* --- LAYOUT GLOBAL --- */
+.container {
+  display:flex;
+  min-height:100vh;
+}
+
+/* --- SIDEBAR FIXE --- */
+aside {
+  position:fixed;
+  top:0;
+  left:0;
+  width:220px;
+  height:100vh;
+  background: linear-gradient(to bottom, #2f7ecd, #519be4);
+  color:white;
+  display:flex;
+  flex-direction:column;
+  padding:20px;
+}
+
+aside img {
+  width:60px;
+  border-radius:50%;
+  margin-bottom:20px;
+}
+
+aside a {
+  color:white;
+  text-decoration:none;
+  margin:10px 0;
+  font-weight:600;
+  transition:0.3s;
+}
+
+aside a i {
+  margin-right:8px;
+}
+
+aside a:hover {
+  opacity:0.8;
+}
+
+/* --- CONTENU GLOBAL --- */
+.content {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  margin-left:220px; /* espace pour le sidebar */
+}
+
+/* --- MAIN CENTRÉ --- */
+main {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center; /* centre horizontalement */
+  padding:30px;
+  width:100%;
+}
+
+/* --- WRAPPER CONTENU --- */
+.main-content {
+  width:100%;
+  max-width:900px; /* largeur max */
+}
+
+/* --- TITRE --- */
+h1 {
+  margin-bottom:15px;
+  color:#34495e;
+  text-align:center;
+}
+
+/* --- ALERT --- */
+.alert {
+  background:#d0e1ff;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:20px;
+  color:#1b3a8a;
+  text-align:center;
+}
+
+/* --- CARD --- */
+.card {
+  background:white;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.05);
+  width:100%; /* important pour que les boutons fassent toute la largeur */
+}
+
+/* --- CALENDRIER --- */
+#calendrier {
+  margin-bottom:20px;
+  padding:15px;
+  background:#e6f0ff;
+  border-radius:12px;
+  color:#1b3a8a;
+  font-weight:600;
+  text-align:center;
+}
+
+/* --- BUTTON --- */
+button {
+  padding:12px;
+  width:100%;
+  border:none;
+  border-radius:10px;
+  background:#357ABD;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button:hover {
+  background:#2563eb;
+}
+
+/* --- LISTE DOCUMENTS --- */
+ul {
+  list-style:none;
+  margin-top:10px;
+}
+
+li {
+  background:#f3f6ff;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:5px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* --- FOOTER --- */
+footer {
+  text-align:center;
+  padding:15px;
+  background:#f0f2f5;
+  border-top:1px solid #ddd;
+  font-size:0.9em;
+  margin-top:auto;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <img src="logo.png" alt="Logo RentMaster">
+    <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i> Contrat</a>
+    <a href="paiement_locataire.html"><i class="fas fa-credit-card"></i> Paiement</a>
+    <a href="historique.html"><i class="fas fa-history"></i> Historique</a>
+    <a href="profil_locataire.html"><i class="fas fa-user"></i> Profil</a>
+    <a href="index.html"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+  </aside>
+
+  <!-- CONTENU -->
+  <div class="content">
+
+    <main>
+      <div class="main-content">
+        <h1>Mon Contrat</h1>
+
+        <div class="alert">
+          Il est important de consulter régulièrement votre contrat pour suivre vos échéances et obligations.
+        </div>
+
+        <div id="calendrier">
+          📅 Prochaine échéance : 05 Avril 2026
+        </div>
+
+        <div id="contratInfo"></div>
+
+        <div class="card">
+          <h3><i class="fas fa-file-download"></i> Contrat</h3>
+          <button onclick="telechargerContrat()">Télécharger le contrat</button>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-paperclip"></i> Ajouter document</h3>
+          <input type="file" id="fileInput">
+          <button onclick="ajouterDocument()">Ajouter</button>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-folder-open"></i> Documents</h3>
+          <ul id="listeDocs"></ul>
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      &copy; 2026 RentMaster. Tous droits réservés. | Contact: support@rentmaster.com
+    </footer>
+
+  </div>
+
+</div>
+
+<script>
+// sécurité
+if(localStorage.getItem("connecte") !== "true"){ window.location.href="login.html"; }
+
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let userId = localStorage.getItem("userId");
+let locataire = locataires.find(l => l.id == userId);
+
+if(!localStorage.getItem("contrats")){
+  let contrats = [
+    {id:1, locataireId:1, bien:"Appartement A", bailleur:"Mr Dupont", montant:500, dateDebut:"01/01/2026", dateFin:"31/12/2026"}
+  ];
+  localStorage.setItem("contrats", JSON.stringify(contrats));
+}
+
+let contrats = JSON.parse(localStorage.getItem("contrats"));
+let contrat = contrats.find(c => c.locataireId == locataire?.id);
+
+let contratDiv = document.getElementById("contratInfo");
+if(contrat){
+  contratDiv.innerHTML = `
+    <div class="card">
+      <h3><i class="fas fa-info-circle"></i> Informations</h3>
+      <p><strong>Bien:</strong> ${contrat.bien}</p>
+      <p><strong>Bailleur:</strong> ${contrat.bailleur}</p>
+      <p><strong>Montant:</strong> ${contrat.montant}$</p>
+      <p><strong>Date début:</strong> ${contrat.dateDebut}</p>
+      <p><strong>Date fin:</strong> ${contrat.dateFin}</p>
+    </div>`;
+}else{
+  contratDiv.innerHTML = "<p>Aucun contrat trouvé.</p>";
+}
+
+// documents
+let documents = JSON.parse(localStorage.getItem("documents")) || [];
+
+function afficherDocs(){
+  let ul = document.getElementById("listeDocs");
+  ul.innerHTML = "";
+  if(documents.length === 0){ ul.innerHTML="<p>Aucun document</p>"; return; }
+  documents.forEach((d,i)=>{
+    ul.innerHTML += `<li>${d} <i class="fas fa-trash" onclick="supprimerDoc(${i})"></i></li>`;
+  });
+}
+
+function ajouterDocument(){
+  let file = document.getElementById("fileInput").files[0];
+  if(!file){ alert("Choisir un fichier !"); return; }
+  documents.push(file.name);
+  localStorage.setItem("documents", JSON.stringify(documents));
+  afficherDocs();
+}
+
+function supprimerDoc(i){
+  documents.splice(i,1);
+  localStorage.setItem("documents", JSON.stringify(documents));
+  afficherDocs();
+}
+
+function telechargerContrat(){ alert("Téléchargement du contrat..."); }
+
+afficherDocs();
+</script>
+
+</body>
+</html>

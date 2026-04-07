@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des Contrats - RentMaster</title>
+<link rel="stylesheet" href="bien.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="logo.png" alt="Logo RentMaster">
+      <h2>RentMaster</h2>
+    </div>
+    <nav>
+      <a href="dashboard.html"><i class="fa fa-home"></i> Dashboard</a>
+      <a href="bien.html"><i class="fa fa-building"></i> Biens</a>
+      <a href="locataire.html"><i class="fa fa-users"></i> Locataires</a>
+      <a href="contrat.html" class="active"><i class="fa fa-file-contract"></i> Contrats</a>
+      <a href="paiement.html"><i class="fa fa-credit-card"></i> Paiements</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1>Gestion des Contrats</h1>
+      <p>Ajoutez, modifiez ou supprimez les contrats de location et leurs documents associés.</p>
+    </div>
+
+    <div class="actions-top">
+      <button onclick="openForm()"><i class="fa fa-plus"></i> Ajouter un contrat</button>
+    </div>
+
+    <table id="tableContrats">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Bien</th>
+          <th>Locataire</th>
+          <th>Loyer</th>
+          <th>Charges</th>
+          <th>Total</th>
+          <th>Date début</th>
+          <th>Date fin</th>
+          <th>Statut</th>
+          <th>Documents</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- FORMULAIRE MODAL -->
+    <div id="formContrat" class="form-modal" style="display:none;">
+      <h2 id="formTitle">Ajouter un contrat</h2>
+
+      <label>Bien :</label>
+      <select id="bienSelect"></select>
+
+      <label>Locataire :</label>
+      <select id="locataireSelect"></select>
+
+      <label>Loyer :</label>
+      <input type="number" id="loyer" min="0" oninput="calculTotal()">
+
+      <h3>Charges</h3>
+      <label>Eau :</label>
+      <input type="number" id="eau" min="0" placeholder="0" oninput="calculTotal()">
+      <label>Électricité :</label>
+      <input type="number" id="electricite" min="0" placeholder="0" oninput="calculTotal()">
+      <label>Internet :</label>
+      <input type="number" id="internet" min="0" placeholder="0" oninput="calculTotal()">
+
+      <label>Total :</label>
+      <input type="number" id="total" readonly>
+
+      <label>Date début :</label>
+      <input type="date" id="dateDebut">
+      <label>Date fin :</label>
+      <input type="date" id="dateFin">
+
+      <label>Statut :</label>
+      <select id="statut">
+        <option value="Actif">Actif</option>
+        <option value="Terminé">Terminé</option>
+      </select>
+
+      <label>Documents :</label>
+      <input type="file" id="documents" multiple><br>
+
+      <div class="btn-group">
+        <button id="btnAjouter" onclick="ajouterContrat()"><i class="fa fa-check"></i> Ajouter</button>
+        <button onclick="annulerForm()"><i class="fa fa-times"></i> Annuler</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+let biens = JSON.parse(localStorage.getItem("biens")) || [];
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let contrats = JSON.parse(localStorage.getItem("contrats")) || [];
+let editIndex = -1;
+
+// --- Calcul total charges + loyer ---
+function calculTotal(){
+    const loyer = parseFloat(document.getElementById('loyer').value) || 0;
+    const eau = parseFloat(document.getElementById('eau').value) || 0;
+    const electricite = parseFloat(document.getElementById('electricite').value) || 0;
+    const internet = parseFloat(document.getElementById('internet').value) || 0;
+    document.getElementById('total').value = loyer + eau + electricite + internet;
+}
+
+// --- Remplir selects ---
+function remplirSelects(){
+    const bienSelect = document.getElementById('bienSelect');
+    const locSelect = document.getElementById('locataireSelect');
+    bienSelect.innerHTML = "";
+    locSelect.innerHTML = "";
+    biens.forEach(b => { bienSelect.innerHTML += `<option value="${b.id}">${b.nom}</option>`; });
+    locataires.forEach(l => { locSelect.innerHTML += `<option value="${l.id}">${l.nom} ${l.prenom}</option>`; });
+}
+
+// --- Afficher contrats ---
+function afficherContrats(){
+    remplirSelects();
+    const table = document.querySelector('#tableContrats tbody');
+    table.innerHTML = "";
+    contrats.forEach((c,index)=>{
+        const row = table.insertRow();
+        const bien = biens.find(b => b.id==c.bienId)?.nom || "Supprimé";
+        const loc = locataires.find(l => l.id==c.locataireId) ? locataires.find(l => l.id==c.locataireId).nom+" "+locataires.find(l => l.id==c.locataireId).prenom : "Supprimé";
+        const charges = `Eau:${c.charges?.eau || 0}$ - Élec:${c.charges?.electricite || 0}$ - Internet:${c.charges?.internet || 0}$`;
+        const total = (parseFloat(c.loyer)+parseFloat(c.charges?.eau||0)+parseFloat(c.charges?.electricite||0)+parseFloat(c.charges?.internet||0)).toFixed(2);
+
+        row.insertCell(0).innerText = c.id;
+        row.insertCell(1).innerText = bien;
+        row.insertCell(2).innerText = loc;
+        row.insertCell(3).innerText = c.loyer + " $";
+        row.insertCell(4).innerText = charges;
+        row.insertCell(5).innerText = total + " $";
+        row.insertCell(6).innerText = c.dateDebut;
+        row.insertCell(7).innerText = c.dateFin;
+        row.insertCell(8).innerText = c.statut;
+
+        const docsCell = row.insertCell(9);
+        if(c.documents?.length > 0){
+            c.documents.forEach((doc,i)=>{
+                const a = document.createElement('a');
+                a.href = doc;
+                a.target="_blank";
+                a.innerText = `Doc ${i+1}`;
+                a.style.marginRight="5px";
+                docsCell.appendChild(a);
+            });
+        }
+
+        const actionsCell = row.insertCell(10);
+        actionsCell.innerHTML = `<button onclick="modifierContrat(${index})"><i class="fa fa-edit"></i></button>
+                                 <button onclick="supprimerContrat(${index})"><i class="fa fa-trash"></i></button>`;
+    });
+}
+
+// --- Formulaire ---
+function openForm(){ document.getElementById('formContrat').style.display='block'; }
+function annulerForm(){
+    document.getElementById('formContrat').style.display='none';
+    ['loyer','dateDebut','dateFin','eau','electricite','internet','total','documents'].forEach(id=>document.getElementById(id).value='');
+    editIndex=-1;
+    document.getElementById('formTitle').innerText="Ajouter un contrat";
+    document.getElementById('btnAjouter').innerHTML='<i class="fa fa-check"></i> Ajouter';
+}
+
+// --- Ajouter / Modifier contrat ---
+function ajouterContrat(){
+    const bienId = document.getElementById('bienSelect').value;
+    const locataireId = document.getElementById('locataireSelect').value;
+    const loyer = parseFloat(document.getElementById('loyer').value) || 0;
+    const dateDebut = document.getElementById('dateDebut').value;
+    const dateFin = document.getElementById('dateFin').value;
+    const statut = document.getElementById('statut').value;
+    const eau = parseFloat(document.getElementById('eau').value) || 0;
+    const electricite = parseFloat(document.getElementById('electricite').value) || 0;
+    const internet = parseFloat(document.getElementById('internet').value) || 0;
+
+    if(!bienId || !locataireId || !loyer || !dateDebut || !dateFin){ alert("Remplis tous les champs !"); return; }
+
+    const files = document.getElementById('documents').files;
+    const docsArray = [];
+    for(let i=0;i<files.length;i++){ docsArray.push(URL.createObjectURL(files[i])); }
+
+    const newContrat = {id:contrats.length+1,bienId,locataireId,loyer,dateDebut,dateFin,statut,charges:{eau,electricite,internet},documents:docsArray};
+
+    if(editIndex>=0){ contrats[editIndex] = {...contrats[editIndex], ...newContrat}; editIndex=-1; } 
+    else { contrats.push(newContrat); }
+
+    localStorage.setItem("contrats",JSON.stringify(contrats));
+    afficherContrats();
+    annulerForm();
+}
+
+function modifierContrat(index){
+    editIndex=index;
+    const c = contrats[index];
+    document.getElementById('bienSelect').value = c.bienId;
+    document.getElementById('locataireSelect').value = c.locataireId;
+    document.getElementById('loyer').value = c.loyer;
+    document.getElementById('dateDebut').value = c.dateDebut;
+    document.getElementById('dateFin').value = c.dateFin;
+    document.getElementById('statut').value = c.statut;
+    document.getElementById('eau').value = c.charges?.eau || 0;
+    document.getElementById('electricite').value = c.charges?.electricite || 0;
+    document.getElementById('internet').value = c.charges?.internet || 0;
+    calculTotal();
+    document.getElementById('formTitle').innerText="Modifier un contrat";
+    document.getElementById('btnAjouter').innerHTML='<i class="fa fa-check"></i> Enregistrer';
+    openForm();
+}
+
+function supprimerContrat(index){
+    if(confirm("Voulez-vous vraiment supprimer ce contrat ?")){
+        contrats.splice(index,1);
+        localStorage.setItem("contrats",JSON.stringify(contrats));
+        afficherContrats();
+    }
+}
+
+window.onload=afficherContrats;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Messages - RentMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background: #f4f6f9;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    color: #1b263b;
+}
+
+/* HEADER */
+.header {
+    background: #2563eb;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* NAVIGATION AVEC ICÔNES */
+nav {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    background: #ffffff;
+    padding: 12px;
+    border-bottom: 1px solid #ccc;
+}
+
+nav a {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+nav a:hover {
+    color: #1e40af;
+}
+
+/* CHAT CONTAINER */
+#chatContainer {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    max-width: 800px;
+    margin: auto;
+    width: 100%;
+}
+
+/* MESSAGE */
+.message {
+    max-width: 70%;
+    padding: 12px 18px;
+    border-radius: 15px;
+    margin: 8px 0;
+    font-size: 14px;
+    position: relative;
+    word-wrap: break-word;
+}
+
+/* PROPRIÉTAIRE */
+.proprietaire {
+    background: linear-gradient(135deg, #3498db, #5dade2);
+    color: white;
+    margin-left: auto;
+}
+
+/* LOCATAIRE */
+.locataire {
+    background: #ffffff;
+    border: 1px solid #3498db;
+    margin-right: auto;
+}
+
+/* INFO ET DATE */
+.info-msg {
+    font-size: 11px;
+    opacity: 0.8;
+    margin-bottom: 3px;
+}
+.date-msg {
+    font-size: 10px;
+    margin-top: 5px;
+    text-align: right;
+    opacity: 0.7;
+}
+
+/* SUPPRIMER MESSAGE */
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.7;
+}
+.delete-btn:hover { opacity: 1; color: #ff4d4d; }
+
+/* FORMULAIRE ENVOI */
+#formMessage {
+    display: flex;
+    padding: 12px;
+    background: #ffffff;
+    border-top: 1px solid #ccc;
+    max-width: 800px;
+    margin: auto;
+    width: 100%;
+    gap: 5px;
+}
+
+#formMessage select,
+#formMessage textarea {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+#formMessage textarea {
+    flex: 1;
+    resize: none;
+}
+
+#formMessage button {
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    color: white;
+    cursor: pointer;
+}
+#formMessage button:hover { opacity: 0.9; }
+
+/* SCROLL */
+#chatContainer::-webkit-scrollbar {
+    width: 6px;
+}
+#chatContainer::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 3px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">💬 Messagerie RentMaster</div>
+
+<nav>
+  <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i>Dashboard</a>
+  <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i>Contrats</a>
+  <a href="guide.html"><i class="fas fa-book"></i>Guide</a>
+  <a href="notification_locataire.html"><i class="fas fa-bell"></i>Notifications</a>
+</nav>
+
+<div id="chatContainer"></div>
+
+<div id="formMessage">
+  <select id="locataireSelect"></select>
+  <textarea id="messageText" rows="2" placeholder="Écrire un message..."></textarea>
+  <button onclick="envoyerMessage()">Envoyer</button>
+</div>
+
+<script>
+// DATA
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let messages = JSON.parse(localStorage.getItem("messages")) || [];
+const nomProprietaire = "Propriétaire";
+
+// TEST LOCATAIRES
+if(locataires.length === 0){
+  locataires = [
+    {id: 1, nom: "Ketsia", prenom: "Divine"},
+    {id: 2, nom: "Jean", prenom: "Paul"}
+  ];
+  localStorage.setItem("locataires", JSON.stringify(locataires));
+}
+
+// SELECT
+const locSelect = document.getElementById('locataireSelect');
+locataires.forEach(l => {
+  locSelect.innerHTML += `<option value="${l.id}">${l.nom} ${l.prenom}</option>`;
+});
+
+// AFFICHER MESSAGES
+function afficherMessages() {
+  const container = document.getElementById('chatContainer');
+  container.innerHTML = "";
+
+  if(messages.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#888;">Aucun message</p>';
+    return;
+  }
+
+  messages.forEach((m,index) => {
+    const div = document.createElement('div');
+    div.classList.add('message');
+    div.classList.add(m.deNom === nomProprietaire ? 'proprietaire' : 'locataire');
+
+    div.innerHTML = `
+      <div class="info-msg">${m.deNom} → ${m.aNom}</div>
+      ${m.text}
+      <div class="date-msg">${m.date}</div>
+      <i class="fas fa-trash delete-btn" onclick="supprimerMessage(${index})" title="Supprimer"></i>
+    `;
+
+    container.appendChild(div);
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+// ENVOYER MESSAGE
+function envoyerMessage() {
+  const locId = locSelect.value;
+  const texte = document.getElementById('messageText').value.trim();
+  if(!locId || !texte){ alert("Écris un message !"); return; }
+  const loc = locataires.find(l => l.id == locId);
+
+  const newMessage = {
+    deNom: nomProprietaire,
+    aLocataireId: locId,
+    aNom: loc.nom + " " + loc.prenom,
+    text: texte,
+    date: new Date().toLocaleString()
+  };
+
+  messages.push(newMessage);
+  localStorage.setItem("messages", JSON.stringify(messages));
+  document.getElementById('messageText').value = "";
+  afficherMessages();
+}
+
+// SUPPRIMER MESSAGE
+function supprimerMessage(index){
+  if(confirm("Supprimer ce message ?")){
+    messages.splice(index,1);
+    localStorage.setItem("messages",JSON.stringify(messages));
+    afficherMessages();
+  }
+}
+
+afficherMessages();
+</script>
+</body>
+</html>

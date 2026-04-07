@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Guide Utilisateur - RentMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f4f6f9;
+  color: #1b263b;
+}
+
+/* HEADER */
+.header {
+  background: #2563eb;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* NAV */
+nav {
+    display:flex;
+    justify-content:center;
+    gap:25px;
+    background:white;
+    padding:12px;
+    border-bottom:1px solid #ccc;
+}
+nav a {
+    color:#2563eb;
+    text-decoration:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+}
+nav a:hover { color:#1e40af; }
+
+/* CONTAINER */
+.container {
+    max-width:800px;
+    margin:auto;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+/* SECTION */
+.section {
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.05);
+}
+.section h3 { color:#2563eb; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<div class="header">📘 Guide d'utilisation</div>
+
+<nav>
+  <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i>Dashboard</a>
+  <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i>Contrats</a>
+  <a href="notification_locataire.html"><i class="fas fa-bell"></i>Notifications</a>
+  <a href="message_locataire.html"><i class="fas fa-comment"></i>Messages</a>
+</nav>
+
+<div class="container">
+  <div class="section"><h3>🏠 Dashboard</h3><p>Consultez votre loyer, votre statut et votre prochaine échéance.</p></div>
+  <div class="section"><h3>💳 Paiement</h3><p>Payer votre loyer rapidement et en toute sécurité.</p></div>
+  <div class="section"><h3>📂 Contrat</h3><p>Consultez les détails de votre contrat et vos documents.</p></div>
+  <div class="section"><h3>💬 Messages</h3><p>Discutez directement avec le propriétaire.</p></div>
+  <div class="section"><h3>🔔 Notifications</h3><p>Recevez les alertes importantes (paiement, messages...).</p></div>
+</div>
+
+</body>
+</html>

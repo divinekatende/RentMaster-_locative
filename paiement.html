@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des Paiements - RentMaster</title>
+<link rel="stylesheet" href="bien.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="logo.png" alt="Logo RentMaster">
+      <h2>RentMaster</h2>
+    </div>
+    <nav>
+      <a href="dashboard.html"><i class="fa fa-home"></i> Dashboard</a>
+      <a href="bien.html"><i class="fa fa-building"></i> Biens</a>
+      <a href="locataire.html"><i class="fa fa-users"></i> Locataires</a>
+      <a href="contrat.html"><i class="fa fa-file-contract"></i> Contrats</a>
+      <a href="paiement.html" class="active"><i class="fa fa-credit-card"></i> Paiements</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1>Gestion des Paiements</h1>
+      <p>Enregistrez les paiements des locataires, visualisez les montants et suivez le statut des transactions.</p>
+    </div>
+
+    <div class="actions-top">
+      <button onclick="openForm()"><i class="fa fa-plus"></i> Ajouter un paiement</button>
+    </div>
+
+    <table id="tablePaiements">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Locataire</th>
+          <th>Bien</th>
+          <th>Montant</th>
+          <th>Date</th>
+          <th>Mode</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- FORMULAIRE MODAL -->
+    <div id="formPaiement" class="form-modal">
+      <h2 id="formTitle">Ajouter un paiement</h2>
+
+      <label>Contrat :</label>
+      <select id="contratSelect"></select>
+
+      <label>Montant :</label>
+      <input type="number" id="montant" min="0" oninput="convertir()">
+
+      <label>Devise :</label>
+      <select id="devise" onchange="convertir()">
+        <option value="USD">Dollar ($)</option>
+        <option value="CDF">Franc Congolais (FC)</option>
+      </select>
+
+      <label>Taux CDF/USD :</label>
+      <input type="number" id="taux" value="2500" onchange="convertir()">
+
+      <div id="conversion">Montant en USD : 0 $</div>
+
+      <label>Date paiement :</label>
+      <input type="date" id="datePaiement">
+
+      <label>Date échéance :</label>
+      <input type="date" id="dateEcheance">
+
+      <label>Mode :</label>
+      <select id="mode">
+        <option>Espèces</option>
+        <option>Virement</option>
+        <option>Mobile Money</option>
+      </select>
+
+      <div class="btn-group">
+        <button id="btnAjouter" onclick="ajouterPaiement()"><i class="fa fa-save"></i> Ajouter</button>
+        <button onclick="annulerForm()"><i class="fa fa-times"></i> Annuler</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let contrats = JSON.parse(localStorage.getItem("contrats")) || [];
+let paiements = JSON.parse(localStorage.getItem("paiements")) || [];
+let biens = JSON.parse(localStorage.getItem("biens")) || [];
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let editIndex = -1;
+
+/* Remplir contrats */
+function remplirContrats() {
+  const select = document.getElementById('contratSelect');
+  select.innerHTML = "";
+  contrats.forEach(c => {
+    const loc = locataires.find(l => l.id == c.locataireId);
+    const bien = biens.find(b => b.id == c.bienId);
+    const nomLoc = loc ? loc.nom + " " + loc.prenom : "Supprimé";
+    const nomBien = bien ? bien.nom : "Supprimé";
+    select.innerHTML += `<option value="${c.id}">${nomLoc} - ${nomBien}</option>`;
+  });
+}
+
+/* Conversion devise */
+function convertir() {
+  let montant = parseFloat(document.getElementById("montant").value) || 0;
+  let devise = document.getElementById("devise").value;
+  let taux = parseFloat(document.getElementById("taux").value) || 1;
+  let usd = devise === "CDF" ? montant / taux : montant;
+  document.getElementById("conversion").innerText = "Montant en USD : " + usd.toFixed(2) + " $";
+}
+
+/* Affichage paiements */
+function afficherPaiements() {
+  remplirContrats();
+  const table = document.querySelector('#tablePaiements tbody');
+  table.innerHTML = "";
+  paiements.forEach((p,index) => {
+    const contrat = contrats.find(c => c.id == p.contratId);
+    const loc = contrat ? locataires.find(l => l.id == contrat.locataireId)?.nom : "Supprimé";
+    const bien = contrat ? biens.find(b => b.id == contrat.bienId)?.nom : "Supprimé";
+    const row = table.insertRow();
+    row.insertCell(0).innerText = p.id;
+    row.insertCell(1).innerText = loc;
+    row.insertCell(2).innerText = bien;
+    row.insertCell(3).innerText = p.montant + " " + (p.devise || "USD");
+    row.insertCell(4).innerText = p.date;
+    row.insertCell(5).innerText = p.mode;
+    const statutCell = row.insertCell(6);
+    statutCell.innerText = p.statut;
+    statutCell.style.color = p.statut==="Payé"?"green":p.statut==="En retard"?"red":"orange";
+    const actionsCell = row.insertCell(7);
+    actionsCell.innerHTML = `
+      <button onclick="modifierPaiement(${index})"><i class="fa fa-edit"></i></button>
+      <button onclick="supprimerPaiement(${index})"><i class="fa fa-trash"></i></button>
+    `;
+  });
+}
+
+/* Ajouter paiement */
+function ajouterPaiement() {
+  const contratId = document.getElementById('contratSelect').value;
+  const montant = parseFloat(document.getElementById('montant').value);
+  const date = document.getElementById('datePaiement').value;
+  const dateEcheance = document.getElementById('dateEcheance').value;
+  const mode = document.getElementById('mode').value;
+  const devise = document.getElementById('devise').value;
+  const taux = parseFloat(document.getElementById('taux').value);
+  if(!contratId || !montant || !date) { alert("Remplis tous les champs !"); return; }
+  let statut="Payé";
+  if(dateEcheance && new Date()>new Date(dateEcheance)) statut="En retard";
+  if(editIndex>=0){
+    paiements[editIndex]={...paiements[editIndex],contratId,montant,date,mode,devise,taux,dateEcheance,statut};
+    editIndex=-1;
+  } else paiements.push({id:paiements.length+1,contratId,montant,date,mode,devise,taux,dateEcheance,statut});
+  localStorage.setItem("paiements",JSON.stringify(paiements));
+  afficherPaiements();
+  annulerForm();
+}
+
+/* Modifier paiement */
+function modifierPaiement(index){
+  editIndex=index;
+  const p=paiements[index];
+  document.getElementById('contratSelect').value=p.contratId;
+  document.getElementById('montant').value=p.montant;
+  document.getElementById('datePaiement').value=p.date;
+  document.getElementById('dateEcheance').value=p.dateEcheance;
+  document.getElementById('mode').value=p.mode;
+  document.getElementById('devise').value=p.devise;
+  document.getElementById('taux').value=p.taux;
+  document.getElementById('formTitle').innerText="Modifier un paiement";
+  document.getElementById('btnAjouter').innerHTML='<i class="fa fa-save"></i> Enregistrer';
+  openForm();
+}
+
+/* Supprimer paiement */
+function supprimerPaiement(index){
+  if(confirm("Supprimer ce paiement ?")){ paiements.splice(index,1); localStorage.setItem("paiements",JSON.stringify(paiements)); afficherPaiements(); }
+}
+
+/* UI */
+function openForm(){ document.getElementById('formPaiement').style.display='block'; }
+function annulerForm(){
+  document.getElementById('formPaiement').style.display='none';
+  editIndex=-1;
+  document.getElementById('btnAjouter').innerHTML='<i class="fa fa-save"></i> Ajouter';
+  document.getElementById('formTitle').innerText='Ajouter un paiement';
+  document.querySelectorAll('#formPaiement input, #formPaiement select').forEach(i=>i.value='');
+  convertir();
+}
+
+window.onload=afficherPaiements;
+</script>
+
+</body>
+</html>

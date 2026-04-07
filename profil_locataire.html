@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Profil - RentMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* --- RESET & BASE --- */
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI', sans-serif;
+}
+
+body {
+    background: #f7f9fc;
+    color: #1b263b;
+    display:flex;
+    min-height:100vh;
+}
+
+/* --- SIDEBAR --- */
+aside {
+    position:fixed;
+    top:0;
+    left:0;
+    width:220px;
+    height:100vh;
+    background: linear-gradient(to bottom, white, #40affe, #85c1e9);
+    border-right:1px solid #ddd;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+aside img {
+   
+    width: 150px;
+    margin-bottom: 20px;
+    border-radius: 80px;
+
+}
+
+aside a {
+    text-decoration:none;
+    color:#1b263b;
+    width:90%;
+    padding:10px;
+    margin:5px 0;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    transition:0.3s;
+}
+
+
+aside a i {
+    margin-right:10px;
+}
+
+aside a:hover {
+    background:#e6f0ff;
+    color:#2563eb;
+}
+
+/* --- CONTENU PRINCIPAL --- */
+.content {
+    margin-left:220px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:30px;
+    width:100%;
+}
+
+/* --- WRAPPER CONTENU --- */
+.main-content {
+    width:100%;
+    max-width:900px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    align-items:center;
+}
+
+/* --- NAV TOP (OPTIONNEL) --- */
+nav {
+    display:none;
+}
+
+/* --- FORMULAIRE PROFIL --- */
+#formProfil, #stats {
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    width:100%;
+    box-shadow:0 6px 20px rgba(0,0,0,0.1);
+}
+
+#formProfil h2, #stats h2 {
+    margin-bottom:15px;
+    color:#1b263b;
+    border-bottom:2px solid #3498db;
+    padding-bottom:5px;
+}
+
+input, select {
+    padding:10px;
+    margin:5px 0 15px 0;
+    width:100%;
+    border:1px solid #b0c4de;
+    border-radius:6px;
+    outline:none;
+    background:#fdfdfd;
+}
+
+input:focus, select:focus {
+    border-color:#3498db;
+    box-shadow:0 0 10px rgba(52,152,219,0.2);
+}
+
+/* --- PHOTO PROFIL --- */
+#photoPreview {
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:15px;
+    border:2px solid #3498db;
+}
+
+/* --- BOUTONS --- */
+button {
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(90deg,#3498db,#5dade2);
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover {
+    opacity:0.9;
+}
+
+/* --- STATISTIQUES --- */
+#stats p {
+    margin:8px 0;
+    font-weight:500;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width:900px){
+    .content { margin-left:0; padding:20px; }
+    aside { position:relative; width:100%; flex-direction:row; justify-content:center; height:auto; box-shadow:none; }
+    aside a { margin:5px; flex:1; justify-content:center; }
+    .main-content { max-width:100%; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+    <img src="logo.png" alt="Logo RentMaster">
+    <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i> Contrat</a>
+    <a href="paiement_locataire.html"><i class="fas fa-credit-card"></i> Paiement</a>
+    <a href="historique.html"><i class="fas fa-history"></i> Historique</a>
+    <a href="profil_locataire.html"><i class="fas fa-user"></i> Profil</a>
+    <a href="index.html"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+</aside>
+
+<!-- CONTENU -->
+<div class="content">
+<div class="main-content">
+
+    <!-- FORM PROFIL -->
+    <div id="formProfil">
+        <h2>Profil Personnel</h2>
+
+        <img id="photoPreview" src="default-avatar.png" alt="Photo de profil">
+        <input type="file" id="photo" accept="image/*" onchange="previewPhoto(event)">
+
+        <label>Nom :</label>
+        <input type="text" id="nom">
+
+        <label>Email :</label>
+        <input type="email" id="email">
+
+        <label>Mot de passe actuel :</label>
+        <input type="password" id="currentPassword">
+
+        <label>Nouveau mot de passe :</label>
+        <input type="password" id="newPassword">
+
+        <h2>Paramètres</h2>
+        <label>Thème :</label>
+        <select id="theme">
+            <option value="clair">Clair</option>
+            <option value="sombre">Sombre</option>
+        </select>
+
+        <div>
+            <input type="checkbox" id="notifications">
+            <label for="notifications">Activer les notifications</label>
+        </div>
+
+        <div>
+            <input type="checkbox" id="newsletter">
+            <label for="newsletter">Recevoir la newsletter</label>
+        </div>
+
+        <button onclick="enregistrerProfil()">Enregistrer</button>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div id="stats">
+        <h2>Statistiques rapides</h2>
+        <p>Nombre de Biens : <span id="nbBiens">0</span></p>
+        <p>Nombre de Locataires : <span id="nbLocataires">0</span></p>
+        <p>Nombre de Contrats : <span id="nbContrats">0</span></p>
+    </div>
+
+</div>
+</div>
+
+<script>
+// --- Données simulées ---
+let user = JSON.parse(localStorage.getItem("user")) || {
+  nom:"Locataire",
+  email:"locataire@email.com",
+  password:"123456",
+  theme:"clair",
+  notifications:true,
+  newsletter:false,
+  photo:"default-avatar.png"
+};
+
+let biens = JSON.parse(localStorage.getItem("biens")) || [];
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let contrats = JSON.parse(localStorage.getItem("contrats")) || [];
+
+// --- Initialisation ---
+document.getElementById("nom").value = user.nom;
+document.getElementById("email").value = user.email;
+document.getElementById("theme").value = user.theme;
+document.getElementById("notifications").checked = user.notifications;
+document.getElementById("newsletter").checked = user.newsletter;
+document.getElementById("photoPreview").src = user.photo;
+
+document.getElementById("nbBiens").innerText = biens.length;
+document.getElementById("nbLocataires").innerText = locataires.length;
+document.getElementById("nbContrats").innerText = contrats.length;
+
+// --- Preview photo ---
+function previewPhoto(event){
+    const file = event.target.files[0];
+    if(file){
+        const reader = new FileReader();
+        reader.onload = function(e){
+            document.getElementById("photoPreview").src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// --- Enregistrer profil ---
+function enregistrerProfil(){
+    const nom = document.getElementById("nom").value;
+    const email = document.getElementById("email").value;
+    const currentPassword = document.getElementById("currentPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const theme = document.getElementById("theme").value;
+    const notifications = document.getElementById("notifications").checked;
+    const newsletter = document.getElementById("newsletter").checked;
+    const photo = document.getElementById("photoPreview").src;
+
+    if(!nom || !email){ alert("Nom et Email obligatoires !"); return; }
+    if(currentPassword && currentPassword !== user.password){
+        alert("Mot de passe actuel incorrect !");
+        return;
+    }
+
+    user.nom = nom;
+    user.email = email;
+    if(newPassword) user.password = newPassword;
+    user.theme = theme;
+    user.notifications = notifications;
+    user.newsletter = newsletter;
+    user.photo = photo;
+
+    localStorage.setItem("user", JSON.stringify(user));
+    alert("Profil mis à jour !");
+    document.getElementById("currentPassword").value = '';
+    document.getElementById("newPassword").value = '';
+}
+
+// --- Déconnexion ---
+function deconnexion(){ window.location.href="index.html"; }
+</script>
+
+</body>
+</html>

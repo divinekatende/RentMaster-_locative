@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Historique des paiements</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+* {
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI', sans-serif;
+}
+
+body {
+  background:#f4f6f8;
+  color:#1b263b;
+}
+
+/* LAYOUT GLOBAL */
+.layout {
+  display:flex;
+}
+
+/* SIDEBAR FIXE */
+aside {
+  position:fixed;
+  top:0;
+  left:0;
+  width:220px;
+  height:100vh;
+  background: linear-gradient(to bottom, #2f7ecd, #519be4);
+  color:white;
+  display:flex;
+  flex-direction:column;
+  padding:20px;
+}
+
+aside img {
+  width:60px;
+  border-radius:50%;
+  margin-bottom:20px;
+}
+
+aside a {
+  color:white;
+  text-decoration:none;
+  margin:10px 0;
+  font-weight:600;
+  transition:0.3s;
+}
+
+aside a i {
+  margin-right:8px;
+}
+
+aside a:hover {
+  opacity:0.8;
+}
+
+/* CONTENU */
+.content {
+  margin-left:220px;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  width:100%;
+}
+
+/* MAIN CENTRÉ */
+main {
+  flex:1;
+  padding:30px;
+  max-width:800px;
+  width:100%;
+  margin:auto;
+}
+
+/* TITRE */
+h1 {
+  margin-bottom:20px;
+  color:#296bd4;
+  text-align:center;
+}
+
+/* CONTAINER */
+.container {
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+/* CARD */
+.card {
+  padding:15px;
+  border-radius:10px;
+  background:white;
+  box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+.card p {
+  margin:5px 0;
+}
+
+/* FOOTER */
+footer {
+  text-align:center;
+  padding:20px;
+  background:#f0f2f5;
+  border-top:1px solid #ddd;
+  font-size:0.9em;
+}
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <img src="logo.png" alt="Logo">
+    <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i> Contrat</a>
+    <a href="paiement_locataire.html"><i class="fas fa-credit-card"></i> Paiement</a>
+    <a href="historique.html"><i class="fas fa-history"></i> Historique</a>
+    <a href="profil_locataire.html"><i class="fas fa-user"></i> Profil</a>
+    <a href="index.html"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+  </aside>
+
+  <!-- CONTENU -->
+  <div class="content">
+
+    <main>
+      <h1>Historique des paiements</h1>
+      <div class="container" id="historiqueContainer"></div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
+      <p>
+        Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> |
+        Portfolio : <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Mon Portfolio</a>
+      </p>
+    </footer>
+
+  </div>
+
+</div>
+
+<script>
+// sécurité
+if(localStorage.getItem("connecte") !== "true"){
+  window.location.href="login.html";
+}
+
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let userId = localStorage.getItem("userId");
+let locataire = locataires.find(l => l.id == userId);
+
+let paiements = JSON.parse(localStorage.getItem("paiements")) || [];
+let userPaiements = paiements.filter(p => p.locataireId == locataire.id);
+
+let container = document.getElementById("historiqueContainer");
+
+if(userPaiements.length === 0){
+    container.innerHTML = "<p style='text-align:center;'>Aucun paiement enregistré.</p>";
+} else {
+    userPaiements.forEach(p => {
+        container.innerHTML += `
+            <div class="card">
+                <p><strong>Montant:</strong> ${p.montant}$</p>
+                <p><strong>Date:</strong> ${p.date}</p>
+                <p><strong>Statut:</strong> ${p.statut}</p>
+            </div>`;
+    });
+}
+</script>
+
+</body>
+</html>

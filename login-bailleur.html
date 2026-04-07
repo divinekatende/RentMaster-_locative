@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Connexion Bailleur - RentMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+/* Body et fond */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: url('fond.png') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+body::before {
+    content:"";
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background: rgba(230,245,255,0.7);
+    z-index:0;
+}
+
+/* Header */
+header {
+    display:flex; align-items:center; justify-content:center;
+    padding:25px 20px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb, #38bdf8);
+    color:white;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+    border-bottom-left-radius:15px;
+    border-bottom-right-radius:15px;
+    position:relative; z-index:1;
+}
+
+header img.logo {
+    width:60px; height:60px;
+    margin-right:15px;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+}
+
+header img.logo:hover {
+    transform: rotate(10deg) scale(1.05);
+}
+
+header h1 {
+    font-size:2em;
+    font-weight:700;
+    letter-spacing:1px;
+}
+
+/* Form container */
+.form-container {
+    background: rgba(255,255,255,0.95);
+    width:380px;
+    max-width:90%;
+    margin:60px auto;
+    padding:35px 30px;
+    border-radius:20px;
+    box-shadow:0 12px 35px rgba(30,58,138,0.25);
+    text-align:center;
+    position:relative; z-index:1;
+    opacity:0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.6s forwards;
+}
+
+@keyframes fadeInUp {
+    to { opacity:1; transform: translateY(0); }
+}
+
+/* Inputs */
+input[type="email"], input[type="password"] {
+    width:100%; padding:14px 12px; margin:12px 0;
+    border:1px solid #cbd5f5; border-radius:12px;
+    background:#eff6ff; font-size:1em;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    border-color:#2563eb;
+    box-shadow:0 0 8px rgba(37,99,235,0.4);
+    background:#e0f2fe;
+    outline:none;
+}
+
+/* Button */
+button.btn {
+    width:100%; padding:14px;
+    border:none; border-radius:12px;
+    background: linear-gradient(to right, #2563eb, #38bdf8, #7dd3fc);
+    color:white; font-size:1.05em; font-weight:600;
+    cursor:pointer; transition:all 0.3s ease;
+    margin-top:10px;
+}
+
+button.btn:hover {
+    background: linear-gradient(to right, #1e40af, #2563eb);
+    transform: scale(1.03);
+}
+
+/* Links */
+.form-container a {
+    color:#2563eb; font-size:0.95em; text-decoration:none; transition:0.3s;
+}
+.form-container a:hover { color:#1e3a8a; text-decoration:underline; }
+
+/* Footer */
+footer {
+    text-align:center;
+    padding:20px 0;
+    background: rgba(219,234,254,0.8);
+    color:#1e3a8a;
+    font-size:0.9em;
+    margin-top:auto;
+    position:relative; z-index:1;
+}
+</style>
+</head>
+<body>
+
+<header>
+    <img src="logo.png" alt="Logo RentMaster" class="logo">
+    <h1>RentMaster</h1>
+</header>
+
+<main class="form-container">
+    <h2>Connexion Bailleur</h2>
+    <form onsubmit="connexion(event)">
+        <label for="email">Email :</label>
+        <input type="email" id="email" name="email" placeholder="exemple@mail.com" required>
+
+        <label for="password">Mot de passe :</label>
+        <input type="password" id="password" name="password" placeholder="********" required>
+
+        <button type="submit" class="btn"><i class="fas fa-right-to-bracket"></i> Se connecter</button>
+    </form>
+    <p><a href="index.html"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a></p>
+</main>
+
+<footer>
+    <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
+</footer>
+
+<script>
+function connexion(event){
+    event.preventDefault();
+    // Ici tu peux vérifier l'email / mdp plus tard
+    window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>

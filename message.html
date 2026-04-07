@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Messages - RentMaster</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f4f6f9; color: #1b263b; }
+h1 { margin-bottom: 20px; font-size: 28px; }
+nav a { margin-right: 15px; text-decoration: none; color: #3498db; font-weight: bold; }
+nav a.active { color: #007bff; text-decoration: underline; }
+
+/* Chat */
+#chatContainer { border-radius: 12px; padding: 15px; max-width: 700px; height: 450px; overflow-y: auto; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 20px; }
+.message { padding: 10px 14px; border-radius: 15px; margin: 8px 0; max-width: 70%; word-wrap: break-word; font-size: 14px; cursor: pointer; }
+.proprietaire { background: #d6ecff; text-align: right; margin-left: auto; border: 1px solid #3498db; }
+.locataire { background: #ffffff; text-align: left; margin-right: auto; border: 1px solid #ccc; }
+
+.message.selected { border: 2px solid #dc3545; }
+
+/* Formulaire */
+#formMessage { display: flex; max-width: 700px; margin-top: 10px; }
+#formMessage select, #formMessage textarea { margin-right: 5px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; }
+#formMessage textarea { flex: 1; resize: none; }
+#formMessage button { padding: 6px 12px; border-radius: 6px; border: none; background: #3498db; color: white; cursor: pointer; }
+#formMessage button:hover { background: #2980b9; }
+
+#btnSupprSelected { margin-top: 10px; padding: 6px 12px; border-radius: 6px; border: none; background: #dc3545; color: white; cursor: pointer; }
+#btnSupprSelected:hover { background: #b02a37; }
+</style>
+</head>
+<body>
+
+<h1>Messages 💬</h1>
+
+<nav>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="contrat.html">Contrats</a>
+  <a href="message.html" class="active">💬 Messages</a>
+  <a href="notification.html">🔔 Notifications</a>
+</nav>
+
+<div id="chatContainer">
+  <p style="text-align:center; color:#888;">Aucun message pour l'instant</p>
+</div>
+
+<button id="btnSupprSelected" onclick="supprimerSelection()">Supprimer les messages sélectionnés</button>
+
+<div id="formMessage">
+  <select id="locataireSelect"></select>
+  <textarea id="messageText" rows="2" placeholder="Écrire un message..."></textarea>
+  <button onclick="envoyerMessage()">Envoyer</button>
+</div>
+
+<script>
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let messages = JSON.parse(localStorage.getItem("messages")) || [];
+const nomProprietaire = "Propriétaire";
+
+// Test si vide
+if(locataires.length === 0){
+    locataires = [{id:1, nom:"Ketsia", prenom:"Divine"}, {id:2, nom:"Jean", prenom:"Paul"}];
+    localStorage.setItem("locataires", JSON.stringify(locataires));
+}
+
+// Remplir select
+const locSelect = document.getElementById('locataireSelect');
+locataires.forEach(l => locSelect.innerHTML += `<option value="${l.id}">${l.nom} ${l.prenom}</option>`);
+
+// Affichage messages
+function afficherMessages() {
+    const container = document.getElementById('chatContainer');
+    container.innerHTML = "";
+    if(messages.length === 0){
+        container.innerHTML = '<p style="text-align:center; color:#888;">Aucun message pour l\'instant</p>';
+        return;
+    }
+
+    messages.forEach((m,index)=>{
+        const div = document.createElement('div');
+        div.classList.add('message', m.deNom === nomProprietaire ? 'proprietaire' : 'locataire');
+        div.dataset.index = index;
+
+        div.innerHTML = `<strong>${m.deNom}</strong> → <strong>${m.aNom}</strong><br>${m.text}<div class="date-msg">${m.date}</div>`;
+
+        // Sélection au clic
+        div.addEventListener('click', ()=>{
+            div.classList.toggle('selected');
+        });
+
+        container.appendChild(div);
+    });
+
+    container.scrollTop = container.scrollHeight;
+}
+
+// Envoyer message
+function envoyerMessage() {
+    const locId = locSelect.value;
+    const texte = document.getElementById('messageText').value;
+    if(!locId || !texte){ alert("Sélectionne un locataire et écris un message !"); return; }
+    const loc = locataires.find(l => l.id == locId);
+
+    messages.push({
+        deNom: nomProprietaire,
+        aLocataireId: locId,
+        aNom: loc.nom + " " + loc.prenom,
+        text: texte,
+        date: new Date().toLocaleString()
+    });
+
+    localStorage.setItem("messages", JSON.stringify(messages));
+    document.getElementById('messageText').value = "";
+    afficherMessages();
+}
+
+// Supprimer sélection
+function supprimerSelection(){
+    const selected = document.querySelectorAll('.message.selected');
+    if(selected.length === 0){ alert("Sélectionne au moins un message !"); return; }
+    if(!confirm(`Voulez-vous vraiment supprimer ${selected.length} message(s) ?`)) return;
+
+    const indices = Array.from(selected).map(div => parseInt(div.dataset.index));
+    messages = messages.filter((_,i)=>!indices.includes(i));
+    localStorage.setItem("messages", JSON.stringify(messages));
+    afficherMessages();
+}
+
+afficherMessages();
+</script>
+
+</body>
+</html>

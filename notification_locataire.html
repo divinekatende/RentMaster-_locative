@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Notifications - RentMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin:0;
+    background:#f4f6f9;
+    color:#1b263b;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+}
+
+/* HEADER */
+.header {
+    background:#2563eb;
+    color:white;
+    text-align:center;
+    padding:15px;
+    font-weight:bold;
+}
+
+/* NAV */
+nav {
+    display:flex;
+    justify-content:center;
+    gap:25px;
+    background:white;
+    padding:12px;
+    border-bottom:1px solid #ccc;
+}
+nav a {
+    color:#2563eb;
+    text-decoration:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+}
+nav a:hover { color:#1e40af; }
+
+/* CONTAINER */
+.container {
+    max-width:800px;
+    margin:auto;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+/* NOTIFICATION */
+.notification {
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.05);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.notification p { margin:0; }
+.notification button {
+    border:none;
+    background:#e74c3c;
+    color:white;
+    padding:5px 10px;
+    border-radius:5px;
+    cursor:pointer;
+}
+.notification button:hover { opacity:0.9; }
+</style>
+</head>
+<body>
+
+<div class="header">🔔 Notifications</div>
+
+<nav>
+  <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i>Dashboard</a>
+  <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i>Contrats</a>
+  <a href="message_locataire.html"><i class="fas fa-comment"></i>Messages</a>
+</nav>
+
+<div class="container" id="notifContainer"></div>
+
+<script>
+let notifications = JSON.parse(localStorage.getItem("notifications")) || [
+  {id:1, text:"Paiement du 05/04 reçu."},
+  {id:2, text:"Nouveau message de Ketsia Divine."}
+];
+
+function afficherNotif(){
+  const container = document.getElementById("notifContainer");
+  container.innerHTML="";
+  if(notifications.length===0){
+    container.innerHTML='<p style="text-align:center; color:#888;">Aucune notification</p>';
+    return;
+  }
+  notifications.forEach((n,index)=>{
+    const div = document.createElement("div");
+    div.classList.add("notification");
+    div.innerHTML = `<p>${n.text}</p>
+                     <button onclick="supprimerNotif(${index})"><i class="fas fa-trash"></i></button>`;
+    container.appendChild(div);
+  });
+}
+
+function supprimerNotif(index){
+  notifications.splice(index,1);
+  localStorage.setItem("notifications",JSON.stringify(notifications));
+  afficherNotif();
+}
+
+afficherNotif();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculatrice - RentMaster</title>
+
+<!-- FONTS & ICONES -->
+ <link rel="stylesheet" href="theme.css">
+<script src="theme.js" defer></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+    font-family:'Inter',sans-serif;
+    background:#f4f7fb;
+    margin:0;
+    padding:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+/* CONTENEUR PRINCIPAL */
+.container{
+  max-width:360px;
+  width:100%;
+  margin:40px auto;
+  padding:20px;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.08);
+}
+
+/* TOPBAR */
+.top-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+.top-actions h1{
+  color:#2563eb;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:20px;
+}
+.btn{padding:8px 12px;border:none;border-radius:10px;cursor:pointer;font-weight:600;transition:0.3s;}
+.btn-primary{background:#2563eb;color:#fff;}
+.btn-ghost{background:#fff;border:1px solid #ddd;color:#2563eb;}
+
+/* CALCULATRICE */
+.calculator {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.display {
+    width:100%;
+    height:50px;
+    border-radius:10px;
+    border:2px solid #3498db;
+    text-align:right;
+    font-size:20px;
+    padding:10px;
+}
+
+.buttons {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+}
+
+button.calc-btn {
+    height:50px;
+    border-radius:10px;
+    border:2px solid #3498db;
+    background:#ecf5ff;
+    font-size:18px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button.calc-btn:hover {
+    background:#3498db;
+    color:#fff;
+}
+
+/* SPÉCIAUX */
+.equal { grid-column: span 2; background:#3498db; color:white; }
+.clear { background:#ffecec; border-color:#e74c3c; }
+.clear:hover { background:#e74c3c; color:white; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- TOPBAR -->
+  <div class="top-actions">
+    <h1><i class="fas fa-calculator"></i> Calculatrice</h1>
+    <button class="btn btn-primary" onclick="window.location='dashboard.html'">
+      <i class="fa fa-arrow-left"></i> Retour
+    </button>
+  </div>
+
+  <!-- CALCULATRICE -->
+  <div class="calculator">
+    <input type="text" id="display" class="display" disabled>
+
+    <div class="buttons">
+      <button onclick="clearDisplay()" class="calc-btn clear"><i class="fas fa-trash"></i></button>
+      <button onclick="append('/')" class="calc-btn"><i class="fas fa-divide"></i></button>
+      <button onclick="append('*')" class="calc-btn"><i class="fas fa-times"></i></button>
+      <button onclick="append('-')" class="calc-btn"><i class="fas fa-minus"></i></button>
+
+      <button onclick="append('7')" class="calc-btn">7</button>
+      <button onclick="append('8')" class="calc-btn">8</button>
+      <button onclick="append('9')" class="calc-btn">9</button>
+      <button onclick="append('+')" class="calc-btn"><i class="fas fa-plus"></i></button>
+
+      <button onclick="append('4')" class="calc-btn">4</button>
+      <button onclick="append('5')" class="calc-btn">5</button>
+      <button onclick="append('6')" class="calc-btn">6</button>
+      <button onclick="append('1')" class="calc-btn">1</button>
+
+      <button onclick="append('2')" class="calc-btn">2</button>
+      <button onclick="append('3')" class="calc-btn">3</button>
+      <button onclick="append('0')" class="calc-btn">0</button>
+      <button onclick="append('.')" class="calc-btn">.</button>
+
+      <button onclick="calculate()" class="calc-btn equal"><i class="fas fa-equals"></i></button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let display = document.getElementById("display");
+
+function append(value) {
+    display.value += value;
+}
+
+function clearDisplay() {
+    display.value = "";
+}
+
+function calculate() {
+    try {
+        display.value = eval(display.value);
+    } catch {
+        display.value = "Erreur";
+    }
+}
+</script>
+
+</body>
+</html>

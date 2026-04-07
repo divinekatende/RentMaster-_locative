@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Notifications - RentMaster</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f4f6f9; color: #1b263b; }
+h1 { margin-bottom: 20px; font-size: 28px; }
+nav a { margin-right: 15px; text-decoration: none; color: #3498db; font-weight: bold; }
+nav a.active { color: #007bff; text-decoration: underline; }
+
+#notifContainer {
+    border-radius: 12px;
+    padding: 15px;
+    max-width: 700px;
+    height: 450px;
+    overflow-y: auto;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.notification {
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin: 8px 0;
+    max-width: 95%;
+    word-wrap: break-word;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+.paiementRecu { background: #d4edda; border-left: 5px solid #28a745; }
+.retard { background: #f8d7da; border-left: 5px solid #dc3545; }
+.info { background: #d1ecf1; border-left: 5px solid #17a2b8; }
+
+.notification small { color: #555; font-size: 12px; margin-left: 10px; }
+
+.btn-suppr {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 2px 6px;
+    cursor: pointer;
+    font-size: 10px;
+}
+.btn-suppr:hover { background: #b02a37; }
+</style>
+</head>
+<body>
+
+<h1>Notifications 🔔</h1>
+<nav>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="contrat.html">Contrats</a>
+  <a href="message.html">💬 Messages</a>
+  <a href="notification.html" class="active">🔔 Notifications</a>
+</nav>
+
+<div id="notifContainer">
+  <p style="text-align:center; color:#888;">Aucune notification pour l'instant</p>
+</div>
+
+<script>
+let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+
+function afficherNotifications(){
+    const container = document.getElementById('notifContainer');
+    container.innerHTML = "";
+    if(notifications.length===0){
+        container.innerHTML = '<p style="text-align:center; color:#888;">Aucune notification pour l\'instant</p>';
+        return;
+    }
+
+    notifications.forEach((n,index)=>{
+        const div=document.createElement('div');
+        div.classList.add('notification', n.type==="paiementRecu"?"paiementRecu":n.type==="retard"?"retard":"info");
+        div.innerHTML = `<span><strong>${n.titre}:</strong> ${n.message}</span>
+                         <small>${n.date}</small>
+                         <button class="btn-suppr" onclick="supprimerNotif(${index})">✖</button>`;
+        container.appendChild(div);
+    });
+
+    container.scrollTop=container.scrollHeight;
+}
+
+function ajouterNotification(titre,message,type){
+    const newNotif={titre,message,type,date:new Date().toLocaleString()};
+    notifications.push(newNotif);
+    localStorage.setItem("notifications",JSON.stringify(notifications));
+    afficherNotifications();
+}
+
+function supprimerNotif(index){
+    if(confirm("Voulez-vous vraiment supprimer cette notification ?")){
+        notifications.splice(index,1);
+        localStorage.setItem("notifications",JSON.stringify(notifications));
+        afficherNotifications();
+    }
+}
+
+afficherNotifications();
+</script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard - RentMaster</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+  --bg:#f4f7fb;
+  --white:#ffffff;
+  --blue:#2563eb;
+  --blue-light:#3b82f6;
+  --blue-soft:#eaf1ff;
+  --text:#1e293b;
+  --text-soft:#64748b;
+  --radius:14px;
+}
+
+/* DARK THEME VARIABLES */
+body.dark{
+  --bg:#1e293b;
+  --white:#1f2937;
+  --blue:#3b82f6;
+  --blue-light:#60a5fa;
+  --blue-soft:#334155;
+  --text:#f4f7fb;
+  --text-soft:#cbd5e1;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:var(--bg);color:var(--text);display:flex;}
+.app{display:flex;width:100%;}
+
+/* SIDEBAR */
+.sidebar{
+  width:260px;
+  height:100vh;
+  position:fixed;
+  background:var(--white);
+  border-right:1px solid #ddd;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  transition:.3s;
+}
+.sidebar.dark{
+  background:var(--white);
+  border-color:#334155;
+}
+.sidebar.collapsed{width:80px;}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:25px;}
+.brand i{background:var(--blue);color:#fff;padding:12px;border-radius:10px;}
+.brand span{font-weight:700;}
+.sidebar.collapsed .brand span{display:none;}
+.nav a{
+  display:flex;align-items:center;gap:10px;padding:12px;margin-bottom:8px;
+  border-radius:10px;text-decoration:none;color:var(--text-soft);transition:.3s;
+}
+.nav a:hover{background:var(--blue-soft);color:var(--blue);}
+.sidebar.collapsed .nav span{display:none;}
+
+/* MAIN */
+.main{margin-left:260px;padding:30px;width:100%;transition:.3s;}
+.sidebar.collapsed + .main{margin-left:80px;}
+
+/* TOPBAR */
+.topbar{display:flex;justify-content:space-between;margin-bottom:25px;}
+.topbar h1{font-size:26px;margin-bottom:5px;}
+.topbar p{color:var(--text-soft);}
+.actions{display:flex;gap:10px;align-items:center;}
+.btn{padding:10px 15px;border:none;border-radius:10px;cursor:pointer;font-weight:600;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-ghost{background:#fff;border:1px solid #ddd;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;padding:25px;border-radius:var(--radius);margin-bottom:20px;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px;}
+.card{background:var(--white);padding:20px;border-radius:var(--radius);box-shadow:0 5px 15px rgba(0,0,0,0.05);color:var(--text);}
+.card h3{color:var(--text-soft);font-size:14px;}
+.card p{font-size:24px;font-weight:bold;margin:5px 0;}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:15px;}
+
+/* PANELS */
+.panel{background:var(--white);padding:20px;border-radius:var(--radius);color:var(--text);}
+
+/* QUICK ACTIONS */
+.quick h3{margin-bottom:15px;}
+.quick a{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px;border-radius:10px;background:var(--blue-soft);
+  margin-bottom:10px;text-decoration:none;color:var(--text);
+}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #eee;}
+
+/* BADGE */
+.badge{background:red;color:#fff;padding:3px 7px;border-radius:50%;font-size:12px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="brand">
+    <i class="fa-solid fa-building"></i>
+    <span>RentMaster</span>
+     <button class="btn btn-ghost" onclick="toggleSidebar()">☰</button>
+  </div>
+
+  <div class="nav">
+    <a href="dashboard.html"><i class="fa fa-chart-line"></i><span>Dashboard</span></a>
+    <a href="bien.html"><i class="fa fa-building"></i><span>Biens</span></a>
+    <a href="locataire.html"><i class="fa fa-users"></i><span>Locataires</span></a>
+    <a href="contrat.html"><i class="fa fa-file-contract"></i><span>Contrats</span></a>
+    <a href="paiement.html"><i class="fa fa-credit-card"></i><span>Paiements</span></a>
+    <a href="profil.html"><i class="fa fa-user-circle"></i> Profil</a>
+    <a href="index.html"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div>
+    <h1>Vue d'ensemble de votre portefeuille locatif</h1>
+    <p>Gérez vos biens, locataires et paiements facilement</p>
+  </div>
+
+  <div class="actions">
+    <!-- CALENDRIER -->
+    <button class="btn btn-ghost" onclick="window.location='calendrier.html'">
+      <i class="fa fa-calendar"></i> Calendrier
+    </button>
+
+    <!-- BOUTON THEME -->
+    <button id="themeToggle" class="btn btn-ghost">
+      <i class="fas fa-moon"></i>
+    </button>
+
+    <!-- AJOUTER BIEN -->
+    <button class="btn btn-primary" onclick="window.location='bien.html#formAjout'">
+      <i class="fa fa-plus"></i> Ajouter un bien
+    </button>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <h2>Suivi centralisé de votre activité</h2>
+  <p>Visualisez vos performances en temps réel</p>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="card"><h3>Biens</h3><p id="nbBiens">0</p></div>
+  <div class="card"><h3>Locataires</h3><p id="nbLocataires">0</p></div>
+  <div class="card"><h3>Contrats</h3><p id="nbContrats">0</p></div>
+  <div class="card"><h3>Paiements</h3><p id="nbPaiements">0</p></div>
+</div>
+
+ <!-- Calculatrice -->
+  
+  <div style="grid-column: 1 / 2;">
+  <a href="calculatrice.html" style="text-decoration:none;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:var(--blue-soft);padding:15px;border-radius:var(--radius);color:var(--text);cursor:pointer;transition:0.3s;">
+      <i class="fas fa-calculator" style="font-size:24px;"></i>
+      <div>
+        <strong>Prévisions financières :</strong> Utilisez la calculatrice pour estimer vos revenus et charges.
+      </div>
+    </div>
+  </a>
+</div>
+<!-- GRID -->
+<div class="grid">
+
+  
+  <!-- GRAPH -->
+  <div class="panel">
+    <h3>Revenus mensuels</h3>
+    <canvas id="chart"></canvas>
+  </div>
+
+  <!-- ACTIONS RAPIDES -->
+  <div class="panel quick">
+    <h3>⚡ Actions rapides</h3>
+    <a href="message.html"><span><i class="fa fa-comment"></i> Messages</span></a>
+    <a href="notification.html"><span><i class="fa fa-bell"></i> Notifications</span> <span id="badge" class="badge">0</span></a>
+    <a href="contrat.html#formAjout"><span><i class="fa fa-file-contract"></i> Nouveau contrat</span></a>
+  </div>
+
+</div>
+
+<!-- DERNIÈRES ACTIONS -->
+<div class="panel" style="margin-top:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3>Dernières actions</h3>
+    <button class="btn btn-ghost" onclick="window.location='historique_bailleur.html'">
+      <i class="fa fa-clock"></i> Historique
+    </button>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Action</th><th>Date</th></tr>
+    </thead>
+    <tbody id="tableNotifications"></tbody>
+  </table>
+</div>
+
+</div>
+</div>
+
+<script>
+/* SIDEBAR */
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+/* DATA */
+function loadData(){
+  const biens = JSON.parse(localStorage.getItem("biens")) || [];
+  const locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+  const contrats = JSON.parse(localStorage.getItem("contrats")) || [];
+  const paiements = JSON.parse(localStorage.getItem("paiements")) || [];
+
+  nbBiens.innerText = biens.length;
+  nbLocataires.innerText = locataires.length;
+  nbContrats.innerText = contrats.length;
+  nbPaiements.innerText = paiements.length;
+
+  // notifications
+  const tbody = document.getElementById("tableNotifications");
+  tbody.innerHTML="";
+
+  locataires.slice(-2).forEach(l=>{
+    let row = tbody.insertRow();
+    row.insertCell(0).innerText = "Nouveau locataire : "+l.nom;
+    row.insertCell(1).innerText = new Date().toLocaleDateString();
+  });
+
+  paiements.slice(-2).forEach(p=>{
+    let row = tbody.insertRow();
+    row.insertCell(0).innerText = "Paiement : "+p.montant+"$";
+    row.insertCell(1).innerText = p.date;
+  });
+
+  document.getElementById("badge").innerText = tbody.rows.length;
+}
+
+/* CHART */
+function loadChart(){
+  const paiements = JSON.parse(localStorage.getItem("paiements")) || [];
+  let revenus = Array(12).fill(0);
+  paiements.forEach(p=>{
+    let d = new Date(p.date);
+    revenus[d.getMonth()] += parseFloat(p.montant);
+  });
+
+  new Chart(document.getElementById("chart"),{
+    type:"line",
+    data:{
+      labels:["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc"],
+      datasets:[{
+        data:revenus,
+        borderColor:"#2563eb",
+        backgroundColor:"rgba(37,99,235,0.1)",
+        fill:true,
+        tension:0.4
+      }]
+    }
+  });
+}
+
+/* THEME TOGGLE */
+const themeToggle = document.getElementById("themeToggle");
+themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    if(document.body.classList.contains("dark")){
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    } else {
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+    }
+});
+
+window.onload = ()=>{
+  loadData();
+  loadChart();
+}
+</script>
+</body>
+</html>

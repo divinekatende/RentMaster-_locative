@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des Locataires - RentMaster</title>
+<link rel="stylesheet" href="bien.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="logo.png" alt="Logo RentMaster">
+      <h2>RentMaster</h2>
+    </div>
+    <nav>
+      <a href="dashboard.html"><i class="fa fa-home"></i> Dashboard</a>
+      <a href="bien.html"><i class="fa fa-building"></i> Biens</a>
+      <a href="locataire.html" class="active"><i class="fa fa-users"></i> Locataires</a>
+      <a href="contrat.html"><i class="fa fa-file-contract"></i> Contrats</a>
+      <a href="paiement.html"><i class="fa fa-credit-card"></i> Paiements</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1>Gestion des Locataires</h1>
+      <p>Ajoutez, modifiez ou supprimez vos locataires. Chaque locataire peut avoir une pièce d'identité attachée.</p>
+    </div>
+
+    <div class="actions-top">
+      <input type="text" id="searchInput" placeholder="Nom, Email, Téléphone" onkeyup="filtrerLocataires()">
+      <button onclick="openForm()"><i class="fa fa-plus"></i> Ajouter un locataire</button>
+    </div>
+
+    <table id="tableLocataires">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Matricule</th>
+          <th>Nom complet</th>
+          <th>Date de naissance</th>
+          <th>Sexe</th>
+          <th>État civil</th>
+          <th>Nationalité</th>
+          <th>Email</th>
+          <th>Téléphone</th>
+          <th>Profession</th>
+          <th>Pièce</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- FORMULAIRE MODAL -->
+    <div id="formAjout" class="form-modal">
+      <h2 id="formTitle">Ajouter un locataire</h2>
+
+      <label>Matricule :</label>
+      <input type="text" id="matriculeLocataire" placeholder="Ex: LOC001">
+
+      <label>Nom :</label>
+      <input type="text" id="nomLocataire" placeholder="Nom">
+
+      <label>Prénom :</label>
+      <input type="text" id="prenomLocataire" placeholder="Prénom">
+
+      <label>Date de naissance :</label>
+      <input type="date" id="dobLocataire">
+
+      <label>Sexe :</label>
+      <select id="sexeLocataire">
+        <option>Homme</option>
+        <option>Femme</option>
+      </select>
+
+      <label>État civil :</label>
+      <select id="etatCivilLocataire">
+        <option>Célibataire</option>
+        <option>Marié(e)</option>
+      </select>
+
+      <label>Nationalité :</label>
+      <input type="text" id="nationaliteLocataire" placeholder="Ex: Congolaise">
+
+      <label>Email :</label>
+      <input type="email" id="emailLocataire" placeholder="exemple@email.com">
+
+      <label>Téléphone :</label>
+      <input type="text" id="telLocataire" placeholder="Ex: +243 123 456 789">
+
+      <label>Profession :</label>
+      <input type="text" id="professionLocataire" placeholder="Ex: Enseignant">
+
+      <label>Pièce d'identité :</label>
+      <input type="file" id="idPiece" accept="image/*">
+
+      <div class="btn-group">
+        <button id="btnAjouter" onclick="ajouterLocataire()"><i class="fa fa-save"></i> Ajouter</button>
+        <button onclick="annulerForm()"><i class="fa fa-times"></i> Annuler</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let editIndex = -1;
+
+function afficherLocataires() {
+  const table = document.querySelector('#tableLocataires tbody');
+  table.innerHTML = "";
+  locataires.forEach((locataire, index) => {
+    const row = table.insertRow();
+    row.insertCell(0).innerText = locataire.id;
+    row.insertCell(1).innerText = locataire.matricule;
+    row.insertCell(2).innerText = locataire.nom + " " + locataire.prenom;
+    row.insertCell(3).innerText = locataire.dob;
+    row.insertCell(4).innerText = locataire.sexe;
+    row.insertCell(5).innerText = locataire.etatCivil;
+    row.insertCell(6).innerText = locataire.nationalite;
+    row.insertCell(7).innerText = locataire.email;
+    row.insertCell(8).innerText = locataire.tel;
+    row.insertCell(9).innerText = locataire.profession;
+    row.insertCell(10).innerHTML = locataire.idPiece ? `<a href="${locataire.idPiece}" target="_blank"><i class="fa fa-file"></i> Voir</a>` : "";
+
+    const actionsCell = row.insertCell(11);
+    actionsCell.innerHTML = `
+      <button onclick="modifierLocataire(${index})"><i class="fa fa-edit"></i></button>
+      <button onclick="supprimerLocataire(${index})"><i class="fa fa-trash"></i></button>
+    `;
+  });
+}
+
+function ajouterLocataire() {
+  const matricule = document.getElementById('matriculeLocataire').value;
+  const nom = document.getElementById('nomLocataire').value;
+  const prenom = document.getElementById('prenomLocataire').value;
+  const dob = document.getElementById('dobLocataire').value;
+  const email = document.getElementById('emailLocataire').value;
+  const tel = document.getElementById('telLocataire').value;
+  const sexe = document.getElementById('sexeLocataire').value;
+  const etatCivil = document.getElementById('etatCivilLocataire').value;
+  const nationalite = document.getElementById('nationaliteLocataire').value;
+  const profession = document.getElementById('professionLocataire').value;
+  const file = document.getElementById('idPiece').files[0];
+
+  if(!matricule || !nom || !prenom || !dob || !email || !tel){
+    alert("Remplis tous les champs !");
+    return;
+  }
+
+  const ajouterOuModifier = (imgData) => {
+    if(editIndex >= 0) {
+      locataires[editIndex] = {...locataires[editIndex], matricule, nom, prenom, dob, sexe, etatCivil, nationalite, email, tel, profession, idPiece: imgData || locataires[editIndex].idPiece};
+      editIndex=-1;
+    } else {
+      locataires.push({
+        id: locataires.length+1, matricule, nom, prenom, dob, sexe, etatCivil, nationalite, email, tel, profession, idPiece: imgData||''
+      });
+    }
+    localStorage.setItem("locataires", JSON.stringify(locataires));
+    afficherLocataires();
+    annulerForm();
+  }
+
+  if(file){
+    const reader = new FileReader();
+    reader.onload = e => ajouterOuModifier(e.target.result);
+    reader.readAsDataURL(file);
+  } else ajouterOuModifier();
+
+}
+
+function modifierLocataire(index){
+  editIndex = index;
+  const l = locataires[index];
+  document.getElementById('matriculeLocataire').value = l.matricule;
+  document.getElementById('nomLocataire').value = l.nom;
+  document.getElementById('prenomLocataire').value = l.prenom;
+  document.getElementById('dobLocataire').value = l.dob;
+  document.getElementById('sexeLocataire').value = l.sexe;
+  document.getElementById('etatCivilLocataire').value = l.etatCivil;
+  document.getElementById('nationaliteLocataire').value = l.nationalite;
+  document.getElementById('emailLocataire').value = l.email;
+  document.getElementById('telLocataire').value = l.tel;
+  document.getElementById('professionLocataire').value = l.profession;
+  document.getElementById('formTitle').innerText="Modifier un locataire";
+  document.getElementById('btnAjouter').innerHTML='<i class="fa fa-save"></i> Enregistrer';
+  openForm();
+}
+
+function supprimerLocataire(index){
+  if(confirm("Supprimer ce locataire ?")){
+    locataires.splice(index,1);
+    localStorage.setItem("locataires",JSON.stringify(locataires));
+    afficherLocataires();
+  }
+}
+
+function openForm(){ document.getElementById('formAjout').style.display='block'; }
+function annulerForm(){
+  document.getElementById('formAjout').style.display='none';
+  editIndex=-1;
+  document.getElementById('btnAjouter').innerHTML='<i class="fa fa-save"></i> Ajouter';
+  document.getElementById('formTitle').innerText='Ajouter un locataire';
+  document.querySelectorAll('#formAjout input, #formAjout select').forEach(i=>i.value='');
+}
+
+function filtrerLocataires(){
+  const filtre = document.getElementById('searchInput').value.toLowerCase();
+  const table = document.querySelector('#tableLocataires tbody');
+  table.innerHTML = '';
+  locataires.forEach((l,index)=>{
+    if(l.nom.toLowerCase().includes(filtre) || l.prenom.toLowerCase().includes(filtre) || l.email.toLowerCase().includes(filtre) || l.tel.toLowerCase().includes(filtre)){
+      const row = table.insertRow();
+      row.insertCell(0).innerText=l.id;
+      row.insertCell(1).innerText=l.matricule;
+      row.insertCell(2).innerText=l.nom+' '+l.prenom;
+      row.insertCell(3).innerText=l.dob;
+      row.insertCell(4).innerText=l.sexe;
+      row.insertCell(5).innerText=l.etatCivil;
+      row.insertCell(6).innerText=l.nationalite;
+      row.insertCell(7).innerText=l.email;
+      row.insertCell(8).innerText=l.tel;
+      row.insertCell(9).innerText=l.profession;
+      row.insertCell(10).innerHTML=l.idPiece?`<a href="${l.idPiece}" target="_blank"><i class="fa fa-file"></i> Voir</a>`:'';
+      row.insertCell(11).innerHTML=`<button onclick="modifierLocataire(${index})"><i class="fa fa-edit"></i></button> <button onclick="supprimerLocataire(${index})"><i class="fa fa-trash"></i></button>`;
+    }
+  });
+}
+
+window.onload=afficherLocataires;
+</script>
+
+</body>
+</html>

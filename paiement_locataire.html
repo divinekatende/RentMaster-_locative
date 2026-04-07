@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Paiement</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* {
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI', sans-serif;
+}
+
+body {
+  background:#f4f6f8;
+  color:#1b263b;
+}
+
+/* LAYOUT */
+.layout {
+  display:flex;
+}
+
+/* SIDEBAR FIXE 🔥 */
+aside {
+  position:fixed;
+  top:0;
+  left:0;
+  width:220px;
+  height:100vh;
+  background: linear-gradient(to bottom, #3084d8, #4f9cea);
+  color:white;
+  display:flex;
+  flex-direction:column;
+  padding:20px;
+}
+
+aside img {
+  width:60px;
+  border-radius:50%;
+  margin-bottom:20px;
+}
+
+aside a {
+  color:white;
+  text-decoration:none;
+  margin:10px 0;
+  font-weight:600;
+  transition:0.3s;
+}
+
+aside a i {
+  margin-right:8px;
+}
+
+aside a:hover {
+  opacity:0.8;
+}
+
+/* CONTENU À DROITE */
+.content {
+  margin-left:220px; /* 🔥 laisse la place du sidebar */
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  width:100%;
+}
+
+/* MAIN CENTRÉ */
+main {
+  flex:1;
+  padding:30px;
+  max-width:500px;
+  width:100%;
+  margin:auto; /* 🔥 centre */
+}
+
+/* TITRE */
+h1 {
+  margin-bottom:20px;
+  color:#277fd7;
+  text-align:center;
+}
+
+/* FORMULAIRE */
+.container {
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+/* INPUT */
+input, select, button {
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:1em;
+}
+
+/* BUTTON */
+button {
+  background:#357ABD;
+  color:white;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+}
+
+button:hover {
+  background:#2563eb;
+}
+
+/* RESULT */
+.result {
+  background:#e0e0e0;
+  padding:10px;
+  border-radius:8px;
+  text-align:center;
+  font-weight:600;
+}
+
+/* FOOTER EN BAS */
+footer {
+  text-align:center;
+  padding:20px;
+  background:#f0f2f5;
+  border-top:1px solid #ddd;
+  font-size:0.9em;
+}</style>
+</head>
+<body>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR FIXE -->
+  <aside>
+    <img src="logo.png" alt="Logo">
+    <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i> Contrat</a>
+    <a href="paiement_locataire.html"><i class="fas fa-credit-card"></i> Paiement</a>
+    <a href="historique.html"><i class="fas fa-history"></i> Historique</a>
+    <a href="profil_locataire.html"><i class="fas fa-user"></i> Profil</a>
+    <a href="index.html"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+  </aside>
+
+  <!-- CONTENU -->
+  <div class="content">
+
+    <main>
+      <h1>Paiement</h1>
+
+      <div class="container">
+        <h3>Effectuer un paiement</h3>
+
+        <input type="number" id="montant" placeholder="Montant">
+
+        <select id="devise" onchange="convertir()">
+          <option value="USD">Dollar ($)</option>
+          <option value="CDF">Franc Congolais (FC)</option>
+        </select>
+
+        <input type="number" id="taux" value="2500" onchange="convertir()">
+
+        <div class="result" id="conversion">Montant en USD : 0 $</div>
+
+        <select id="moyen">
+          <option value="Banque">Banque</option>
+          <option value="Orange Money">Orange Money</option>
+          <option value="M-Pesa">M-Pesa</option>
+          <option value="Cash">Cash</option>
+        </select>
+
+        <button onclick="payer()">Payer</button>
+        <p id="message"></p>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
+      <p>
+        Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> |
+        Portfolio : <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Mon Portfolio</a>
+      </p>
+    </footer>
+
+  </div>
+
+</div>
+<script>
+if(localStorage.getItem("connecte") !== "true"){ window.location.href="login.html"; }
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+let userId = localStorage.getItem("userId");
+let locataire = locataires.find(l => l.id == userId);
+let paiements = JSON.parse(localStorage.getItem("paiements")) || [];
+
+function convertir(){
+  let montant = parseFloat(document.getElementById("montant").value)||0;
+  let devise = document.getElementById("devise").value;
+  let taux = parseFloat(document.getElementById("taux").value)||1;
+  let usd = devise==="CDF"? montant/taux : montant;
+  document.getElementById("conversion").innerText="Montant en USD : "+usd.toFixed(2)+" $";
+}
+
+function payer(){
+  let montant = parseFloat(document.getElementById("montant").value);
+  if(!montant){ alert("Entrer un montant"); return; }
+  let devise = document.getElementById("devise").value;
+  let taux = parseFloat(document.getElementById("taux").value);
+  let moyen = document.getElementById("moyen").value;
+  let montantUSD = devise==="CDF"? montant/taux : montant;
+  let paiement = {id:paiements.length+1, locataireId:locataire.id, montant, devise, montantUSD, moyen, date:new Date().toLocaleString(), statut:"Payé"};
+  paiements.push(paiement);
+  localStorage.setItem("paiements", JSON.stringify(paiements));
+  document.getElementById("message").innerText="✅ Paiement réussi via "+moyen+" ("+montantUSD.toFixed(2)+"$)";
+  document.getElementById("montant").value="";
+  document.getElementById("conversion").innerText="Montant en USD : 0 $";
+}
+</script>
+
+</body>
+</html>

@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
+/* === BASE === */
 body {
     font-family:'Inter',sans-serif;
     background:#f4f7fb;
@@ -24,7 +25,6 @@ body {
     min-height:100vh;
 }
 
-/* CONTENEUR PRINCIPAL */
 .container{
   max-width:360px;
   width:100%;
@@ -96,6 +96,24 @@ button.calc-btn:hover {
 .clear { background:#ffecec; border-color:#e74c3c; }
 .clear:hover { background:#e74c3c; color:white; }
 
+/* === RESPONSIVE MOBILE === */
+@media(max-width:400px){
+  .container{
+    margin:20px 10px;
+    padding:15px;
+  }
+  .top-actions{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .top-actions h1{font-size:18px;}
+  .btn{padding:6px 10px;font-size:0.9em;}
+  .display{height:45px;font-size:18px;padding:8px;}
+  button.calc-btn{height:45px;font-size:16px;}
+  .buttons{gap:8px;}
+  .equal{grid-column:span 2;}
+}
 </style>
 </head>
 

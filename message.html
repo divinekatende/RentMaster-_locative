@@ -26,6 +26,45 @@ nav a.active { color: #007bff; text-decoration: underline; }
 
 #btnSupprSelected { margin-top: 10px; padding: 6px 12px; border-radius: 6px; border: none; background: #dc3545; color: white; cursor: pointer; }
 #btnSupprSelected:hover { background: #b02a37; }
+/* === RESPONSIVE MOBILE === */
+@media (max-width: 768px) {
+  body { margin: 10px; }
+
+  h1 { font-size: 22px; text-align: center; }
+
+  nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 15px; }
+  nav a { margin: 0; font-size: 14px; }
+
+  /* Conteneurs */
+  #chatContainer, #notifContainer {
+    max-width: 100%;
+    height: 350px;
+    padding: 10px;
+  }
+
+  /* Formulaire messages */
+  #formMessage {
+    flex-direction: column;
+    gap: 8px;
+  }
+  #formMessage select, #formMessage textarea, #formMessage button {
+    width: 100%;
+    margin: 0;
+  }
+  #formMessage textarea { min-height: 60px; }
+
+  /* Bouton supprimer */
+  #btnSupprSelected {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Messages et notifications */
+  .message { max-width: 90%; font-size: 13px; }
+  .notification { flex-direction: column; align-items: flex-start; font-size: 13px; padding: 10px; }
+  .notification small { margin-top: 4px; margin-left: 0; }
+  .btn-suppr { font-size: 11px; padding: 2px 5px; }
+}
 </style>
 </head>
 <body>

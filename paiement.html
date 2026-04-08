@@ -6,6 +6,172 @@
 <title>Gestion des Paiements - RentMaster</title>
 <link rel="stylesheet" href="bien.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* === BASE === */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f4f6f9;
+  color: #1b263b;
+}
+.container {
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: #2a2dd9;
+  color: white;
+  height: 100vh;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  padding-top: 20px;
+  transition: 0.3s;
+  z-index: 1000;
+}
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.sidebar .logo img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+.sidebar h2 { font-size: 1.3em; margin: 0; }
+.sidebar nav a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 12px 20px;
+  margin-bottom: 5px;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+.sidebar nav a.active, .sidebar nav a:hover {
+  background: #1f23b5;
+  transform: scale(1.03);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  margin-left: 240px;
+  padding: 30px;
+  flex: 1;
+}
+
+/* PAGE HEADER */
+.page-header h1 { margin-bottom: 5px; }
+.page-header p { color: #444; margin-bottom: 20px; }
+
+/* ACTIONS */
+.actions-top { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+.actions-top input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+.actions-top button { padding: 10px 14px; border-radius: 8px; background: #3498db; color: white; border: none; cursor: pointer; transition: 0.3s; }
+.actions-top button:hover { background: #1f6fb2; transform: translateY(-2px); }
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  background: white;
+}
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 0.9em; }
+th { background: #2a2dd9; color: white; font-weight: 600; }
+tr:hover { background: #f1f8ff; }
+table a { text-decoration: none; color: #3498db; font-weight: 500; }
+
+/* FORMULAIRE MODAL */
+.form-modal {
+  display: none;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  padding: 25px;
+  border-radius: 20px;
+  max-width: 500px;
+  margin: 30px auto;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+  transition: 0.3s;
+}
+.form-modal h2 { text-align: center; margin-bottom: 20px; color: #1b263b; }
+.form-modal label { display: block; margin-top: 12px; font-weight: 600; color: #333; }
+.form-modal input, .form-modal select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: all 0.3s;
+}
+.form-modal input:focus, .form-modal select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 10px rgba(52,152,219,0.3);
+  transform: scale(1.02);
+}
+.btn-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.btn-group button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-group button:first-child { background: #3498db; color: white; margin-right: 10px; }
+.btn-group button:last-child { background: #e74c3c; color: white; }
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 15px 20px;
+  background: #f1f4fc;
+  margin-top: 30px;
+  font-size: 0.9em;
+}
+footer a { color: #2a2dd9; text-decoration: none; }
+footer a:hover { color: #5dade2; }
+
+/* RESPONSIVE */
+@media(max-width: 900px) {
+  .container { flex-direction: column; }
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .sidebar nav {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+  }
+  .main-content { margin-left: 0; padding: 20px; }
+  .actions-top { flex-direction: column; gap: 10px; }
+  .btn-group { flex-direction: column; gap: 10px; }
+}
+</style>
+
 </head>
 <body>
 
@@ -92,8 +258,14 @@
         <button onclick="annulerForm()"><i class="fa fa-times"></i> Annuler</button>
       </div>
     </div>
+
   </main>
 </div>
+
+<footer>
+  <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
+  <p>Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> | <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Portfolio</a></p>
+</footer>
 
 <script>
 let contrats = JSON.parse(localStorage.getItem("contrats")) || [];
@@ -102,7 +274,6 @@ let biens = JSON.parse(localStorage.getItem("biens")) || [];
 let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
 let editIndex = -1;
 
-/* Remplir contrats */
 function remplirContrats() {
   const select = document.getElementById('contratSelect');
   select.innerHTML = "";
@@ -115,7 +286,6 @@ function remplirContrats() {
   });
 }
 
-/* Conversion devise */
 function convertir() {
   let montant = parseFloat(document.getElementById("montant").value) || 0;
   let devise = document.getElementById("devise").value;
@@ -124,7 +294,6 @@ function convertir() {
   document.getElementById("conversion").innerText = "Montant en USD : " + usd.toFixed(2) + " $";
 }
 
-/* Affichage paiements */
 function afficherPaiements() {
   remplirContrats();
   const table = document.querySelector('#tablePaiements tbody');
@@ -151,7 +320,6 @@ function afficherPaiements() {
   });
 }
 
-/* Ajouter paiement */
 function ajouterPaiement() {
   const contratId = document.getElementById('contratSelect').value;
   const montant = parseFloat(document.getElementById('montant').value);
@@ -172,7 +340,6 @@ function ajouterPaiement() {
   annulerForm();
 }
 
-/* Modifier paiement */
 function modifierPaiement(index){
   editIndex=index;
   const p=paiements[index];
@@ -188,12 +355,10 @@ function modifierPaiement(index){
   openForm();
 }
 
-/* Supprimer paiement */
 function supprimerPaiement(index){
   if(confirm("Supprimer ce paiement ?")){ paiements.splice(index,1); localStorage.setItem("paiements",JSON.stringify(paiements)); afficherPaiements(); }
 }
 
-/* UI */
 function openForm(){ document.getElementById('formPaiement').style.display='block'; }
 function annulerForm(){
   document.getElementById('formPaiement').style.display='none';
@@ -203,7 +368,6 @@ function annulerForm(){
   document.querySelectorAll('#formPaiement input, #formPaiement select').forEach(i=>i.value='');
   convertir();
 }
-
 window.onload=afficherPaiements;
 </script>
 

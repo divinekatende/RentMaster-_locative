@@ -4,105 +4,294 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestion des Biens - RentMaster</title>
-<link rel="stylesheet" href="bien.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* === BASE === */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f4f6f9;
+  color: #1b263b;
+}
+.container {
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: #2a2dd9;
+  color: white;
+  height: 100vh;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  padding-top: 20px;
+  transition: 0.3s;
+  z-index: 1000;
+}
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.sidebar .logo img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+.sidebar h2 { font-size: 1.3em; margin: 0; }
+.sidebar nav a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 12px 20px;
+  margin-bottom: 5px;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+.sidebar nav a.active, .sidebar nav a:hover {
+  background: #1f23b5;
+  transform: scale(1.03);
+}
+
+/* BOUTON MENU MOBILE */
+.btn-menu-mobile {
+  display: none;
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  margin: 0 10px;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 2000;
+}
+
+/* MAIN CONTENT */
+.main-content {
+  margin-left: 240px;
+  padding: 30px;
+  flex: 1;
+}
+
+/* PAGE HEADER */
+.page-header h1 { margin-bottom: 5px; }
+.page-header p { color: #444; margin-bottom: 20px; }
+
+/* ACTIONS */
+.actions-top { display: flex; gap: 10px; margin-bottom: 15px; }
+.actions-top input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+.actions-top button { padding: 10px 14px; border-radius: 8px; background: #3498db; color: white; border: none; cursor: pointer; transition: 0.3s; }
+.actions-top button:hover { background: #1f6fb2; transform: translateY(-2px); }
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  background: white;
+}
+th, td { padding: 14px; text-align: left; border-bottom: 1px solid #ddd; }
+th { background: #2a2dd9; color: white; font-weight: 600; }
+tr:hover { background: #f1f8ff; }
+.identite { max-width: 50px; border-radius: 50%; border: 1px solid #ccc; }
+
+/* STATUTS */
+.vacant { color: #27ae60; font-weight: bold; }
+.loue { color: #e74c3c; font-weight: bold; }
+.maintenance { color: #f39c12; font-weight: bold; }
+
+/* FORMULAIRE MODAL */
+.form-modal {
+  display: none;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  padding: 25px;
+  border-radius: 20px;
+  max-width: 500px;
+  margin: 30px auto;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+  transition: 0.3s;
+}
+.form-modal h2 { text-align: center; margin-bottom: 20px; color: #1b263b; }
+.form-modal label { display: block; margin-top: 12px; font-weight: 600; color: #333; }
+.form-modal input, .form-modal select, .form-modal textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: all 0.3s;
+}
+.form-modal input:focus, .form-modal select:focus, .form-modal textarea:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 10px rgba(52,152,219,0.3);
+  transform: scale(1.02);
+}
+
+.btn-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.btn-group button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-group button:first-child { background: #3498db; color: white; margin-right: 10px; }
+.btn-group button:last-child { background: #e74c3c; color: white; }
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 15px 20px;
+  background: #f1f4fc;
+  margin-top: 30px;
+  font-size: 0.9em;
+}
+footer a { color: #2a2dd9; text-decoration: none; }
+footer a:hover { color: #5dade2; }
+
+/* RESPONSIVE */
+@media(max-width: 900px) {
+  .container { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    flex-direction: row;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .sidebar nav {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+  .sidebar nav a {
+    display: inline-block;
+    margin-bottom: 0;
+    padding: 10px 15px;
+  }
+  .main-content { margin-left: 0; padding: 20px; }
+  .actions-top { flex-direction: column; gap: 10px; }
+  .btn-group { flex-direction: column; gap: 10px; }
+  .btn-menu-mobile { display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+}
+</style>
 </head>
 <body>
 
+<!-- BOUTON MENU MOBILE -->
+<button id="menuToggle" class="btn-menu-mobile">
+  <i class="fas fa-bars"></i>
+</button>
+
 <div class="container">
+<aside class="sidebar">
+  <div class="logo">
+    <img src="logo.png" alt="Logo RentMaster">
+    <h2>RentMaster</h2>
+  </div>
+  <nav>
+    <a href="dashboard.html"><i class="fa fa-home"></i> Dashboard</a>
+    <a href="bien.html" class="active"><i class="fa fa-building"></i> Biens</a>
+    <a href="locataire.html"><i class="fa fa-users"></i> Locataires</a>
+    <a href="contrat.html"><i class="fa fa-file-contract"></i> Contrats</a>
+    <a href="paiement.html"><i class="fa fa-credit-card"></i> Paiements</a>
+  </nav>
+</aside>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="logo">
-      <img src="logo.png" alt="Logo RentMaster">
-      <h2>RentMaster</h2>
+<main class="main-content">
+  <div class="page-header">
+    <h1>Gestion des Biens</h1>
+    <p>Ajoutez, modifiez ou supprimez vos biens facilement. Chaque bien peut avoir une image d'identité.</p>
+  </div>
+
+  <div class="actions-top">
+    <input type="text" id="searchInput" placeholder="Rechercher : Nom, Adresse, Statut" onkeyup="filtrerBiens()">
+    <button onclick="document.getElementById('formAjout').style.display='block'"><i class="fa fa-plus"></i> Ajouter un bien</button>
+  </div>
+
+  <table id="tableBiens">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Image</th>
+        <th>Nom</th>
+        <th>Adresse</th>
+        <th>Type</th>
+        <th>Surface (m²)</th>
+        <th>Pièces</th>
+        <th>Loyer ($)</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- FORMULAIRE MODAL -->
+  <div id="formAjout" class="form-modal">
+    <h2 id="formTitle">Ajouter un bien</h2>
+
+    <label>Image d'identité du bien :</label>
+    <input type="file" id="imageBien" accept="image/*">
+
+    <label>Nom :</label>
+    <input type="text" id="nomBien" placeholder="Ex: Appartement centre-ville">
+
+    <label>Adresse :</label>
+    <input type="text" id="adresseBien" placeholder="Ex: 12 rue du Marché">
+
+    <label>Type :</label>
+    <select id="typeBien">
+      <option value="Appartement">Appartement</option>
+      <option value="Maison">Maison</option>
+      <option value="Studio">Studio</option>
+      <option value="Bureau">Bureau</option>
+    </select>
+
+    <label>Surface (m²) :</label>
+    <input type="number" id="surfaceBien" placeholder="Ex: 80">
+
+    <label>Nombre de pièces :</label>
+    <input type="number" id="piecesBien" placeholder="Ex: 3">
+
+    <label>Loyer ($) :</label>
+    <input type="number" id="loyerBien" placeholder="Ex: 450">
+
+    <label>Statut :</label>
+    <select id="statutBien">
+      <option value="Disponible">Disponible</option>
+      <option value="Loué">Loué</option>
+      <option value="Maintenance">Maintenance</option>
+    </select>
+
+    <label>Description / équipements :</label>
+    <textarea id="descBien" rows="3" placeholder="Ex: Balcon, piscine, parking"></textarea>
+
+    <div class="btn-group">
+      <button id="btnAjouter" onclick="ajouterBien()"><i class="fa fa-save"></i> Ajouter</button>
+      <button onclick="annulerForm()"><i class="fa fa-times"></i> Annuler</button>
     </div>
-    <nav>
-      <a href="dashboard.html"><i class="fa fa-home"></i> Dashboard</a>
-      <a href="bien.html" class="active"><i class="fa fa-building"></i> Biens</a>
-      <a href="locataire.html"><i class="fa fa-users"></i> Locataires</a>
-      <a href="contrat.html"><i class="fa fa-file-contract"></i> Contrats</a>
-      <a href="paiement.html"><i class="fa fa-credit-card"></i> Paiements</a>
-    </nav>
-  </aside>
+  </div>
 
-  <!-- CONTENU PRINCIPAL -->
-  <main class="main-content">
-    <div class="page-header">
-      <h1>Gestion des Biens</h1>
-      <p>Ajoutez, modifiez ou supprimez vos biens facilement. Chaque bien peut avoir une image d'identité.</p>
-    </div>
-
-    <div class="actions-top">
-      <input type="text" id="searchInput" placeholder="Rechercher : Nom, Adresse, Statut" onkeyup="filtrerBiens()">
-      <button onclick="document.getElementById('formAjout').style.display='block'"><i class="fa fa-plus"></i> Ajouter un bien</button>
-    </div>
-
-    <table id="tableBiens">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Image</th>
-          <th>Nom</th>
-          <th>Adresse</th>
-          <th>Type</th>
-          <th>Surface (m²)</th>
-          <th>Pièces</th>
-          <th>Loyer ($)</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <!-- FORMULAIRE MODAL -->
-    <div id="formAjout" class="form-modal">
-      <h2 id="formTitle">Ajouter un bien</h2>
-
-      <label>Image d'identité du bien :</label>
-      <input type="file" id="imageBien" accept="image/*">
-
-      <label>Nom :</label>
-      <input type="text" id="nomBien" placeholder="Ex: Appartement centre-ville">
-
-      <label>Adresse :</label>
-      <input type="text" id="adresseBien" placeholder="Ex: 12 rue du Marché">
-
-      <label>Type :</label>
-      <select id="typeBien">
-        <option value="Appartement">Appartement</option>
-        <option value="Maison">Maison</option>
-        <option value="Studio">Studio</option>
-        <option value="Bureau">Bureau</option>
-      </select>
-
-      <label>Surface (m²) :</label>
-      <input type="number" id="surfaceBien" placeholder="Ex: 80">
-
-      <label>Nombre de pièces :</label>
-      <input type="number" id="piecesBien" placeholder="Ex: 3">
-
-      <label>Loyer ($) :</label>
-      <input type="number" id="loyerBien" placeholder="Ex: 450">
-
-      <label>Statut :</label>
-      <select id="statutBien">
-        <option value="Disponible">Disponible</option>
-        <option value="Loué">Loué</option>
-        <option value="Maintenance">Maintenance</option>
-      </select>
-
-      <label>Description / équipements :</label>
-      <textarea id="descBien" rows="3" placeholder="Ex: Balcon, piscine, parking"></textarea>
-
-      <div class="btn-group">
-        <button id="btnAjouter" onclick="ajouterBien()"><i class="fa fa-save"></i> Ajouter</button>
-        <button onclick="annulerForm()"><i class="fa fa-times"></i> Annuler</button>
-      </div>
-    </div>
-
-  </main>
+</main>
 </div>
 
 <footer>
@@ -117,6 +306,7 @@
 let biens = JSON.parse(localStorage.getItem("biens")) || [];
 let editIndex = -1;
 
+// AFFICHER LES BIENS
 function afficherBiens() {
   const table = document.querySelector('#tableBiens tbody');
   table.innerHTML = "";
@@ -139,6 +329,7 @@ function afficherBiens() {
   });
 }
 
+// AJOUT / MODIF / SUPPRESSION
 function ajouterBien() {
   const nom = document.getElementById('nomBien').value;
   const adresse = document.getElementById('adresseBien').value;
@@ -214,6 +405,7 @@ function annulerForm() {
   document.getElementById('formTitle').innerText="Ajouter un bien";
 }
 
+// FILTRER
 function filtrerBiens() {
   const filtre = document.getElementById('searchInput').value.toLowerCase();
   const table = document.querySelector('#tableBiens tbody');
@@ -239,8 +431,14 @@ function filtrerBiens() {
   });
 }
 
+// MENU MOBILE
+const menuToggle = document.getElementById("menuToggle");
+menuToggle.addEventListener("click", () => {
+  document.querySelector(".sidebar").classList.toggle("show");
+});
+
+// INIT
 afficherBiens();
 </script>
-
 </body>
 </html>

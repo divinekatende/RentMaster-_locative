@@ -139,6 +139,130 @@ footer {
 footer a { color: #2a2dd9; text-decoration: none; }
 footer a:hover { color: #5dade2; }
 
+/* =========================
+   RESPONSIVE AMÉLIORÉ MOBILE
+========================= */
+@media(max-width: 900px) {
+
+  /* STRUCTURE */
+  .container {
+    flex-direction: column;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .sidebar .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .sidebar .logo img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .sidebar nav {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .sidebar nav a {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  /* MAIN */
+  .main-content {
+    margin-left: 0;
+    padding: 15px;
+  }
+
+  /* HEADER */
+  .page-header h1 {
+    font-size: 20px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+  }
+
+  /* ACTIONS */
+  .actions-top {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .actions-top input {
+    width: 100%;
+  }
+
+  .actions-top button {
+    width: 100%;
+  }
+
+  /* TABLE RESPONSIVE */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  th, td {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .identite {
+    max-width: 40px;
+  }
+
+  /* FORM */
+  .form-modal {
+    width: 95%;
+    margin: 20px auto;
+  }
+
+  /* BOUTONS FORM */
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+}
+
+/* =========================
+   TRÈS PETITS ÉCRANS
+========================= */
+@media(max-width: 500px){
+
+  .sidebar nav a {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .page-header h1 {
+    font-size: 18px;
+  }
+
+  .page-header p {
+    font-size: 13px;
+  }
+
+  
+}
 /* RESPONSIVE */
 @media(max-width: 900px) {
   .container { flex-direction: column; }

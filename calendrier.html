@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
+/* === BASE === */
 body{
   font-family:'Inter',sans-serif;
   background:#f4f7fb;
@@ -69,6 +70,27 @@ h1{
   color:#fff;
   font-weight:600;
   box-shadow:0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* === RESPONSIVE MOBILE === */
+@media(max-width:600px){
+  .container{margin:20px auto;padding:15px;}
+  h1{font-size:1.2em;}
+  .top-actions{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .calendar-controls{
+    flex-direction:column;
+    gap:10px;
+  }
+  .btn{padding:6px 10px;font-size:0.9em;}
+  .weekdays div, .day{
+    padding:10px 0;
+    font-size:0.8em;
+  }
+  .day{margin:2px;}
 }
 </style>
 </head>

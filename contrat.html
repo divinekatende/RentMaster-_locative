@@ -161,15 +161,79 @@ footer a { color: #2a2dd9; text-decoration: none; }
 footer a:hover { color: #5dade2; }
 
 /* RESPONSIVE */
+/* BOUTON MENU MOBILE */
+.btn-menu-mobile {
+  display: none;
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 2000;
+}
+
+/* RESPONSIVE PRO */
 @media(max-width: 900px) {
-  .container { flex-direction: column; }
-  .sidebar { left: -260px; position: fixed; height: 100%; flex-direction: column; overflow-y: auto; width: 240px; }
-  .sidebar.show { left: 0; }
-  .sidebar nav { display: flex; flex-direction: column; }
-  .main-content { margin-left: 0; padding: 20px; }
-  .actions-top { flex-direction: column; gap: 10px; }
-  .btn-group { flex-direction: column; gap: 10px; }
-  .btn-menu-mobile { display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+
+  .container {
+    flex-direction: column;
+  }
+
+  /* Sidebar cachée */
+  .sidebar {
+    left: -260px;
+    position: fixed;
+    height: 100%;
+    width: 240px;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* Sidebar visible */
+  .sidebar.show {
+    left: 0;
+  }
+
+  /* Nav vertical */
+  .sidebar nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Contenu */
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  /* Bouton visible */
+  .btn-menu-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Formulaire */
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .actions-top {
+    flex-direction: column;
+  }
+
+  /* TABLE SCROLL (ULTRA IMPORTANT) */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
 </style>
 </head>
@@ -177,7 +241,6 @@ footer a:hover { color: #5dade2; }
 
 <div class="container">
 
-<!-- BOUTON MENU MOBILE -->
 <button id="menuToggle" class="btn-menu-mobile">
   <i class="fas fa-bars"></i>
 </button>

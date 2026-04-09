@@ -2,155 +2,254 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Connexion Bailleur - RentMaster</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-* { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentMaster | Connexion Bailleur</title>
 
-/* Body et fond */
+<style>
+
+/* =========================
+   RESET
+========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+/* =========================
+   BODY
+========================= */
 body {
     min-height: 100vh;
+    background: linear-gradient(135deg, #dbeafe, #e0f2fe);
     display: flex;
-    flex-direction: column;
-    background: url('fond.png') no-repeat center center fixed;
-    background-size: cover;
-    position: relative;
+    justify-content: center;
+    align-items: center;
 }
 
-body::before {
-    content:"";
-    position:absolute; top:0; left:0; right:0; bottom:0;
-    background: rgba(230,245,255,0.7);
-    z-index:0;
+/* =========================
+   CONTAINER
+========================= */
+.container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    padding: 30px 25px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
-/* Header */
-header {
-    display:flex; align-items:center; justify-content:center;
-    padding:25px 20px;
-    background: linear-gradient(135deg, #1e3a8a, #2563eb, #38bdf8);
-    color:white;
-    box-shadow:0 5px 15px rgba(0,0,0,0.2);
-    border-bottom-left-radius:15px;
-    border-bottom-right-radius:15px;
-    position:relative; z-index:1;
+/* =========================
+   LOGO
+========================= */
+.logo {
+    width: 230px;
+    margin-bottom: 5px;
 }
 
-header img.logo {
-    width:60px; height:60px;
-    margin-right:15px;
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease;
+/* =========================
+   TITRES
+========================= */
+.app-name {
+    font-size: 26px;
+    color: #2563eb;
+    margin-bottom: 5px;
 }
 
-header img.logo:hover {
-    transform: rotate(10deg) scale(1.05);
+.page-title {
+    font-size: 18px;
+    color: #333;
+    margin: 14px 0 20px;
 }
 
-header h1 {
-    font-size:2em;
-    font-weight:700;
-    letter-spacing:1px;
+/* =========================
+   FORM
+========================= */
+.form {
+    text-align: left;
 }
 
-/* Form container */
-.form-container {
-    background: rgba(255,255,255,0.95);
-    width:380px;
-    max-width:90%;
-    margin:60px auto;
-    padding:35px 30px;
-    border-radius:20px;
-    box-shadow:0 12px 35px rgba(30,58,138,0.25);
-    text-align:center;
-    position:relative; z-index:1;
-    opacity:0;
-    transform: translateY(30px);
-    animation: fadeInUp 0.6s forwards;
+.form-group {
+    margin-bottom: 15px;
 }
 
-@keyframes fadeInUp {
-    to { opacity:1; transform: translateY(0); }
+.form-group label {
+    font-size: 14px;
+    color: #444;
+    margin-bottom: 6px;
+    display: block;
 }
 
-/* Inputs */
-input[type="email"], input[type="password"] {
-    width:100%; padding:14px 12px; margin:12px 0;
-    border:1px solid #cbd5f5; border-radius:12px;
-    background:#eff6ff; font-size:1em;
-    transition: all 0.3s ease;
+.form-group input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
 }
 
-input:focus {
-    border-color:#2563eb;
-    box-shadow:0 0 8px rgba(37,99,235,0.4);
-    background:#e0f2fe;
-    outline:none;
+.form-group input:focus {
+    border-color: #2563eb;
+    outline: none;
 }
 
-/* Button */
-button.btn {
-    width:100%; padding:14px;
-    border:none; border-radius:12px;
-    background: linear-gradient(to right, #2563eb, #38bdf8, #7dd3fc);
-    color:white; font-size:1.05em; font-weight:600;
-    cursor:pointer; transition:all 0.3s ease;
-    margin-top:10px;
+/* =========================
+   MESSAGE
+========================= */
+#messageErreur {
+    font-size: 13px;
+    margin-top: 10px;
+    text-align: center;
 }
 
-button.btn:hover {
-    background: linear-gradient(to right, #1e40af, #2563eb);
-    transform: scale(1.03);
+.error {
+    color: #d32f2f;
 }
 
-/* Links */
-.form-container a {
-    color:#2563eb; font-size:0.95em; text-decoration:none; transition:0.3s;
+/* =========================
+   BOUTON
+========================= */
+button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #2563eb;
+    color: white;
+    transition: 0.3s;
 }
-.form-container a:hover { color:#1e3a8a; text-decoration:underline; }
 
-/* Footer */
+button:hover {
+    background-color: #1e40af;
+    transform: translateY(-2px);
+}
+
+/* =========================
+   LIENS
+========================= */
+.links {
+    margin-top: 20px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.links a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.links a:hover {
+    text-decoration: underline;
+}
+
+/* =========================
+   FOOTER
+========================= */
 footer {
-    text-align:center;
-    padding:20px 0;
-    background: rgba(219,234,254,0.8);
-    color:#1e3a8a;
-    font-size:0.9em;
-    margin-top:auto;
-    position:relative; z-index:1;
+    margin-top: 25px;
+    font-size: 12px;
+    color: #888;
 }
+/* =========================
+   RESPONSIVE MOBILE
+========================= */
+@media (max-width: 480px) {
+
+    body {
+        padding: 15px;
+    }
+
+    .container {
+        padding: 25px 20px;
+        border-radius: 12px;
+    }
+
+    .app-name {
+        font-size: 22px;
+    }
+
+    .page-title {
+        font-size: 16px;
+    }
+
+    .form-group input {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    button {
+        padding: 12px;
+        font-size: 15px;
+    }
+}
+
 </style>
 </head>
+
 <body>
 
-<header>
+<main class="container">
+
+    <!-- Logo -->
     <img src="logo.png" alt="Logo RentMaster" class="logo">
-    <h1>RentMaster</h1>
-</header>
 
-<main class="form-container">
-    <h2>Connexion Bailleur</h2>
-    <form onsubmit="connexion(event)">
-        <label for="email">Email :</label>
-        <input type="email" id="email" name="email" placeholder="exemple@mail.com" required>
+    
 
-        <label for="password">Mot de passe :</label>
-        <input type="password" id="password" name="password" placeholder="********" required>
+    <!-- Titre -->
+    <h2 class="page-title">Connexion Bailleur</h2>
 
-        <button type="submit" class="btn"><i class="fas fa-right-to-bracket"></i> Se connecter</button>
+    <!-- Formulaire -->
+    <form class="form" onsubmit="connexion(event)">
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="exemple@mail.com" required>
+        </div>
+
+        <div class="form-group">
+            <label>Mot de passe</label>
+            <input type="password" id="password" placeholder="********" required>
+        </div>
+
+        <button type="submit">Se connecter</button>
+
+        <p id="messageErreur"></p>
+
     </form>
-    <p><a href="index.html"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a></p>
-</main>
 
-<footer>
-    <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
-</footer>
+    <!-- Liens -->
+    <div class="links">
+        <p><a href="index.html">← Retour à l’accueil</a></p>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 RentMaster</p>
+    </footer>
+
+</main>
 
 <script>
 function connexion(event){
     event.preventDefault();
-    // Ici tu peux vérifier l'email / mdp plus tard
+
+    // Simulation connexion
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    if(email === "" || password === ""){
+        document.getElementById("messageErreur").textContent = "Veuillez remplir tous les champs";
+        document.getElementById("messageErreur").className = "error";
+        return;
+    }
+
+    // Redirection
     window.location.href = "dashboard.html";
 }
 </script>

@@ -34,6 +34,21 @@ body.dark {
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
 body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
 
+/* BOUTON MENU MOBILE */
+.menu-btn {
+  display:none;
+  position:fixed;
+  top:15px;
+  left:15px;
+  background:var(--blue);
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  z-index:2000;
+  cursor:pointer;
+}
+
 /* SIDEBAR */
 aside {
   width:220px;
@@ -135,18 +150,21 @@ footer a:hover { color:var(--blue-light); }
 /* Responsive */
 @media (max-width:900px){
   body { flex-direction:column; }
-  aside { width:100%; flex-direction:row; overflow-x:auto; padding:10px; }
-  aside a { flex:1; text-align:center; margin-bottom:0; margin-right:8px; }
-  aside img#logo { display:none; }
+  .menu-btn { display:block; }
+  aside { position:fixed; left:-250px; top:0; height:100%; z-index:1500; }
+  aside.show { left:0; }
+  main { padding:20px; }
   .tabs-container { flex-direction: column; align-items:flex-start; gap:10px; }
 }
 </style>
 </head>
 <body>
 
+<!-- BOUTON MENU MOBILE -->
+<button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+
 <!-- Sidebar -->
-<aside>
-  
+<aside id="sidebar">
     <img src="logo.png" id="logo" alt="Logo RentMaster">
     <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a href="bien.html"><i class="fa fa-building"></i> Biens</a>
@@ -207,7 +225,7 @@ footer a:hover { color:var(--blue-light); }
   <h2>Paramètres</h2>
   <div class="settings">
       <label><input type="checkbox" id="notifCheck"> Activer les notifications</label>
-      <label><input type="checkbox" id="darkMode"> Mode sombre</label>
+      <label><input type="checkbox" id="darkModeSetting"> Mode sombre</label>
       <label for="langue">Langue :</label>
       <select id="langue">
           <option value="fr">Français</option>
@@ -245,10 +263,24 @@ photoInput.addEventListener('change', e => {
   if(file){ photoPreview.src = URL.createObjectURL(file); }
 });
 
-// Thème toggle
+// Thème toggle en haut
 const themeToggle = document.getElementById('themeToggle');
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('dark');
+  themeToggle.innerHTML = document.body.classList.contains('dark') 
+    ? '<i class="fas fa-sun"></i>' 
+    : '<i class="fas fa-moon"></i>';
+});
+
+// Menu mobile
+const menuBtn = document.getElementById("menuBtn");
+const sidebar = document.getElementById("sidebar");
+menuBtn.addEventListener("click", () => sidebar.classList.toggle("show"));
+
+// Mode sombre via onglet Paramètres
+const darkModeCheckbox = document.getElementById('darkModeSetting');
+darkModeCheckbox.addEventListener('change', () => {
+  document.body.classList.toggle('dark', darkModeCheckbox.checked);
   themeToggle.innerHTML = document.body.classList.contains('dark') 
     ? '<i class="fas fa-sun"></i>' 
     : '<i class="fas fa-moon"></i>';

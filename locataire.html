@@ -149,34 +149,79 @@ footer a { color: #2a2dd9; text-decoration: none; }
 footer a:hover { color: #5dade2; }
 
 /* RESPONSIVE */
+/* BOUTON MENU MOBILE */
+.btn-menu-mobile {
+  display: none;
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 2000;
+}
+
+/* RESPONSIVE PRO */
 @media(max-width: 900px) {
-  .container { flex-direction: column; }
+
+  .container {
+    flex-direction: column;
+  }
+
+  /* Sidebar cachée */
   .sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 0;
+    left: -260px;
+    position: fixed;
+    height: 100%;
+    width: 240px;
+    flex-direction: column;
+    overflow-y: auto;
   }
-  .sidebar .logo {
-    display: none;
+
+  /* Sidebar visible */
+  .sidebar.show {
+    left: 0;
   }
+
+  /* Nav vertical */
   .sidebar nav {
     display: flex;
-    flex-direction: row;
-    width: 100%;
+    flex-direction: column;
   }
-  .sidebar nav a {
-    flex: 1;
-    text-align: center;
-    margin: 0;
-    border-radius: 0;
-    padding: 12px 5px;
+
+  /* Contenu */
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
   }
-  .main-content { margin-left: 0; padding: 20px; }
-  .actions-top { flex-direction: column; gap: 10px; }
-  .btn-group { flex-direction: column; gap: 10px; }
+
+  /* Bouton visible */
+  .btn-menu-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Formulaire */
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .actions-top {
+    flex-direction: column;
+  }
+
+  /* TABLE SCROLL (ULTRA IMPORTANT) */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
 </style>
 </head>
@@ -184,6 +229,9 @@ footer a:hover { color: #5dade2; }
 
 <div class="container">
 
+  <button id="menuToggle" class="btn-menu-mobile">
+  <i class="fas fa-bars"></i>
+</button>
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="logo">
@@ -357,6 +405,13 @@ function filtrerLocataires(){
 }
 
 window.onload=afficherLocataires;
+// MENU MOBILE
+const menuToggle = document.getElementById("menuToggle");
+const sidebar = document.querySelector(".sidebar");
+
+menuToggle.addEventListener("click", () => {
+  sidebar.classList.toggle("show");
+});
 </script>
 
 </body>

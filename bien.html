@@ -167,41 +167,108 @@ footer a { color: #2a2dd9; text-decoration: none; }
 footer a:hover { color: #5dade2; }
 
 /* RESPONSIVE */
+/* BOUTON MENU MOBILE */
+.btn-menu-mobile {
+  display: none;
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 2000;
+}
+
+/* RESPONSIVE PRO */
+/* BOUTON MENU MOBILE */
+.btn-menu-mobile {
+  display: none;
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 2000;
+}
+
+/* RESPONSIVE */
 @media(max-width: 900px) {
-  .container { flex-direction: column; }
+
+  .container {
+    flex-direction: column;
+  }
+
+  /* Sidebar cachée */
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    flex-direction: row;
+    position: fixed;
+    left: -260px;
+    top: 0;
+    width: 240px;
+    height: 100%;
+    z-index: 1000;
+  }
+
+  /* Sidebar ouverte */
+  .sidebar.show {
+    left: 0;
+  }
+
+  /* Contenu */
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  /* Bouton visible */
+  .btn-menu-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Actions */
+  .actions-top {
+    flex-direction: column;
+  }
+
+  /* Boutons formulaire */
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* TABLE SCROLL (IMPORTANT) */
+  table {
+    display: block;
     overflow-x: auto;
     white-space: nowrap;
   }
-  .sidebar nav {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-  }
-  .sidebar nav a {
-    display: inline-block;
-    margin-bottom: 0;
-    padding: 10px 15px;
-  }
-  .main-content { margin-left: 0; padding: 20px; }
-  .actions-top { flex-direction: column; gap: 10px; }
-  .btn-group { flex-direction: column; gap: 10px; }
-  .btn-menu-mobile { display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px; }
 }
 </style>
 </head>
 <body>
 
-<!-- BOUTON MENU MOBILE -->
+
+
+<div class="container">
+
+  <!-- BOUTON MENU MOBILE -->
 <button id="menuToggle" class="btn-menu-mobile">
   <i class="fas fa-bars"></i>
 </button>
 
 <div class="container">
+
+<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="logo">
     <img src="logo.png" alt="Logo RentMaster">
@@ -433,8 +500,10 @@ function filtrerBiens() {
 
 // MENU MOBILE
 const menuToggle = document.getElementById("menuToggle");
+const sidebar = document.querySelector(".sidebar");
+
 menuToggle.addEventListener("click", () => {
-  document.querySelector(".sidebar").classList.toggle("show");
+  sidebar.classList.toggle("show");
 });
 
 // INIT

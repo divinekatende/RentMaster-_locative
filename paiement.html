@@ -6,6 +6,14 @@
 <title>Gestion des Paiements - RentMaster</title>
 <link rel="stylesheet" href="bien.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des Paiements - RentMaster</title>
+<link rel="stylesheet" href="bien.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 /* === BASE === */
 body {
@@ -77,8 +85,19 @@ body {
   border-radius: 12px;
   border: 1px solid #ccc;
 }
-.actions-top button { padding: 10px 14px; border-radius: 8px; background: #3498db; color: white; border: none; cursor: pointer; transition: 0.3s; }
-.actions-top button:hover { background: #1f6fb2; transform: translateY(-2px); }
+.actions-top button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #3498db;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.actions-top button:hover {
+  background: #1f6fb2;
+  transform: translateY(-2px);
+}
 
 /* TABLE */
 table {
@@ -89,10 +108,23 @@ table {
   box-shadow: 0 6px 20px rgba(0,0,0,0.1);
   background: white;
 }
-th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 0.9em; }
-th { background: #2a2dd9; color: white; font-weight: 600; }
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.9em;
+}
+th {
+  background: #2a2dd9;
+  color: white;
+  font-weight: 600;
+}
 tr:hover { background: #f1f8ff; }
-table a { text-decoration: none; color: #3498db; font-weight: 500; }
+table a {
+  text-decoration: none;
+  color: #3498db;
+  font-weight: 500;
+}
 
 /* FORMULAIRE MODAL */
 .form-modal {
@@ -106,8 +138,17 @@ table a { text-decoration: none; color: #3498db; font-weight: 500; }
   box-shadow: 0 15px 30px rgba(0,0,0,0.25);
   transition: 0.3s;
 }
-.form-modal h2 { text-align: center; margin-bottom: 20px; color: #1b263b; }
-.form-modal label { display: block; margin-top: 12px; font-weight: 600; color: #333; }
+.form-modal h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1b263b;
+}
+.form-modal label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+  color: #333;
+}
 .form-modal input, .form-modal select {
   width: 100%;
   padding: 10px;
@@ -122,6 +163,8 @@ table a { text-decoration: none; color: #3498db; font-weight: 500; }
   box-shadow: 0 0 10px rgba(52,152,219,0.3);
   transform: scale(1.02);
 }
+
+/* BOUTONS */
 .btn-group {
   display: flex;
   justify-content: space-between;
@@ -135,8 +178,15 @@ table a { text-decoration: none; color: #3498db; font-weight: 500; }
   cursor: pointer;
   font-weight: 600;
 }
-.btn-group button:first-child { background: #3498db; color: white; margin-right: 10px; }
-.btn-group button:last-child { background: #e74c3c; color: white; }
+.btn-group button:first-child {
+  background: #3498db;
+  color: white;
+  margin-right: 10px;
+}
+.btn-group button:last-child {
+  background: #e74c3c;
+  color: white;
+}
 
 /* FOOTER */
 footer {
@@ -146,37 +196,101 @@ footer {
   margin-top: 30px;
   font-size: 0.9em;
 }
-footer a { color: #2a2dd9; text-decoration: none; }
-footer a:hover { color: #5dade2; }
+footer a {
+  color: #2a2dd9;
+  text-decoration: none;
+}
+footer a:hover {
+  color: #5dade2;
+}
 
-/* RESPONSIVE */
+
+/* BOUTON MENU MOBILE */
+.btn-menu-mobile {
+  display: none;
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 2000;
+}
+
+/* RESPONSIVE PROPRE */
 @media(max-width: 900px) {
-  .container { flex-direction: column; }
-  .sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
+
+  .container {
+    flex-direction: column;
   }
+
+  /* Sidebar cachée */
+  .sidebar {
+    left: -260px;
+    position: fixed;
+    height: 100%;
+    width: 240px;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* Quand on clique menu */
+  .sidebar.show {
+    left: 0;
+  }
+
+  /* Nav vertical propre */
   .sidebar nav {
     display: flex;
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-around;
+    flex-direction: column;
   }
-  .main-content { margin-left: 0; padding: 20px; }
-  .actions-top { flex-direction: column; gap: 10px; }
-  .btn-group { flex-direction: column; gap: 10px; }
-}
-</style>
 
+  /* Contenu */
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  /* Bouton visible */
+  .btn-menu-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Ajustement formulaire */
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .actions-top {
+    flex-direction: column;
+  }
+
+  /* TABLE SCROLL (IMPORTANT) */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+</style>
 </head>
+
 <body>
 
 <div class="container">
-
+  
+<!-- BOUTON MENU MOBILE -->
+<button id="menuToggle" class="btn-menu-mobile">
+  <i class="fas fa-bars"></i>
+</button>
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
@@ -369,6 +483,13 @@ function annulerForm(){
   convertir();
 }
 window.onload=afficherPaiements;
+// MENU MOBILE
+const menuToggle = document.getElementById("menuToggle");
+const sidebar = document.querySelector(".sidebar");
+
+menuToggle.addEventListener("click", () => {
+  sidebar.classList.toggle("show");
+});
 </script>
 
 </body>

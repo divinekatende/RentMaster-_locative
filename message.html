@@ -26,44 +26,21 @@ nav a.active { color: #007bff; text-decoration: underline; }
 
 #btnSupprSelected { margin-top: 10px; padding: 6px 12px; border-radius: 6px; border: none; background: #dc3545; color: white; cursor: pointer; }
 #btnSupprSelected:hover { background: #b02a37; }
+
 /* === RESPONSIVE MOBILE === */
 @media (max-width: 768px) {
   body { margin: 10px; }
-
   h1 { font-size: 22px; text-align: center; }
 
   nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 15px; }
   nav a { margin: 0; font-size: 14px; }
 
-  /* Conteneurs */
-  #chatContainer, #notifContainer {
-    max-width: 100%;
-    height: 350px;
-    padding: 10px;
-  }
-
-  /* Formulaire messages */
-  #formMessage {
-    flex-direction: column;
-    gap: 8px;
-  }
-  #formMessage select, #formMessage textarea, #formMessage button {
-    width: 100%;
-    margin: 0;
-  }
+  #chatContainer { max-width: 100%; height: 350px; padding: 10px; }
+  #formMessage { flex-direction: column; gap: 8px; }
+  #formMessage select, #formMessage textarea, #formMessage button { width: 100%; margin: 0; }
   #formMessage textarea { min-height: 60px; }
-
-  /* Bouton supprimer */
-  #btnSupprSelected {
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  /* Messages et notifications */
+  #btnSupprSelected { width: 100%; margin-top: 10px; }
   .message { max-width: 90%; font-size: 13px; }
-  .notification { flex-direction: column; align-items: flex-start; font-size: 13px; padding: 10px; }
-  .notification small { margin-top: 4px; margin-left: 0; }
-  .btn-suppr { font-size: 11px; padding: 2px 5px; }
 }
 </style>
 </head>
@@ -91,11 +68,12 @@ nav a.active { color: #007bff; text-decoration: underline; }
 </div>
 
 <script>
+// Locataires et messages
 let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
 let messages = JSON.parse(localStorage.getItem("messages")) || [];
 const nomProprietaire = "Propriétaire";
 
-// Test si vide
+// Si vide, ajouter test
 if(locataires.length === 0){
     locataires = [{id:1, nom:"Ketsia", prenom:"Divine"}, {id:2, nom:"Jean", prenom:"Paul"}];
     localStorage.setItem("locataires", JSON.stringify(locataires));
@@ -118,14 +96,8 @@ function afficherMessages() {
         const div = document.createElement('div');
         div.classList.add('message', m.deNom === nomProprietaire ? 'proprietaire' : 'locataire');
         div.dataset.index = index;
-
         div.innerHTML = `<strong>${m.deNom}</strong> → <strong>${m.aNom}</strong><br>${m.text}<div class="date-msg">${m.date}</div>`;
-
-        // Sélection au clic
-        div.addEventListener('click', ()=>{
-            div.classList.toggle('selected');
-        });
-
+        div.addEventListener('click', ()=>{ div.classList.toggle('selected'); });
         container.appendChild(div);
     });
 
@@ -157,7 +129,6 @@ function supprimerSelection(){
     const selected = document.querySelectorAll('.message.selected');
     if(selected.length === 0){ alert("Sélectionne au moins un message !"); return; }
     if(!confirm(`Voulez-vous vraiment supprimer ${selected.length} message(s) ?`)) return;
-
     const indices = Array.from(selected).map(div => parseInt(div.dataset.index));
     messages = messages.filter((_,i)=>!indices.includes(i));
     localStorage.setItem("messages", JSON.stringify(messages));
@@ -166,6 +137,5 @@ function supprimerSelection(){
 
 afficherMessages();
 </script>
-
 </body>
 </html>

@@ -76,22 +76,29 @@ header {
     background: linear-gradient(90deg, #0c0384, #3f31fc, #2c6ff5, #030664);
     color: white;
     padding: 15px;
-    text-align: center;
     font-size: 1.6em;
     font-weight: 600;
     border-radius: 10px;
     margin-bottom: 20px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 
+/* Hamburger à gauche */
 header .menu-toggle {
     display: none;
     font-size: 1.6em;
     cursor: pointer;
+    margin-right: 15px;
 }
 
+/* HEADER TEXTE CENTRÉ */
+header .title {
+    flex: 1;
+    text-align: center;
+}
+
+/* ICONES */
 header .top-icons i {
     font-size: 1.3em;
     margin-left: 20px;
@@ -99,9 +106,7 @@ header .top-icons i {
     position: relative;
     transition: 0.3s;
 }
-
 header .top-icons i:hover { color: #ffd700; }
-
 header .top-icons .badge {
     position: absolute;
     top: -6px;
@@ -126,21 +131,6 @@ header .top-icons .badge {
     transition: 0.3s;
 }
 #calendarBtn:hover { background: #1e40af; }
-
-/* ===== WELCOME & INFO ===== */
-#welcome {
-    font-size: 1.2em;
-    margin-bottom: 15px;
-}
-
-.info-text {
-    background: #ffffff;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
 
 /* ===== BOUTON PAYER ===== */
 .btn {
@@ -237,7 +227,7 @@ header .top-icons .badge {
     aside.show a { opacity: 1; }
     main { margin-left: 0; padding: 15px; }
     .cards { grid-template-columns: 1fr; }
-    header .menu-toggle { display: inline-block; }
+    header .menu-toggle { display: inline-block; margin-left: 0; margin-right: 15px; }
     .quick-access { flex-wrap: wrap; justify-content: space-around; gap: 15px; }
     .btn { width: 100%; max-width: 300px; }
 }
@@ -258,8 +248,8 @@ header .top-icons .badge {
 
 <main>
 <header>
-    <span>Dashboard Locataire</span>
     <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+    <span class="title">Dashboard Locataire</span>
 </header>
 
 <!-- Calendrier -->

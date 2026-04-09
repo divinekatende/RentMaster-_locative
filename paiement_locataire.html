@@ -89,14 +89,28 @@ footer { text-align:center; padding:20px; background:#f0f2f5; border-top:1px sol
   .menu-toggle { display:block; }
   .content { margin-left:0; }
 }
+.menu-toggle {
+  display:block; /* Toujours visible */
+  position: fixed;
+  top:15px;
+  left:15px;
+  background:#3084d8;
+  color:white;
+  border:none;
+  padding:10px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  z-index:1100;
+}
 </style>
 </head>
 <body>
 
-<!-- BOUTON HAMBURGER -->
-<button class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+
 
 <div class="layout">
+<!-- BOUTON HAMBURGER -->
+<button class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
   <!-- SIDEBAR -->
   <aside id="sidebar">

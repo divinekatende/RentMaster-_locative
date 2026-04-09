@@ -3,202 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RentMaster - Accueil</title>
+<title>RentMaster</title>
 
 <style>
-
-/* =======================
-   RESET
-======================= */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
-    font-family: 'Poppins', sans-serif;
-    min-height: 100vh;
-    
-    /* Background */
-    background-image: url("fond.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-
-    display: flex;
-    flex-direction: column;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  overflow: hidden;
+  position: relative;
 }
 
-/* =======================
-   MAIN
-======================= */
-.main-content {
-    flex: 1; /* pousse le footer en bas */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+/* LOGO */
+#logo {
+  width: 250px;
+  opacity: 0;
+  transform: scale(0.5);
+  animation: logoAppear 2s forwards;
+  z-index: 2;
 }
 
-/* =======================
-   CARD
-======================= */
-.card {
-    width: 100%;
-    max-width: 360px;
-    padding: 30px 20px;
-    text-align: center;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+@keyframes logoAppear {
+  0% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-/* =======================
-   LOGO
-======================= */
-.logo-round {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 20px;
-    border: 4px solid #2563EB;
+/* PARTICULES AVEC TRAÎNÉE */
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  filter: blur(2px);
+  animation: trailMove 4s linear infinite;
 }
 
-/* =======================
-   TEXTES
-======================= */
-h2 {
-    font-size: 1.1rem;
-    color: #2563EB;
-    margin-bottom: 25px;
+/* traînée derrière */
+.particle::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 8px;
+  background: inherit;
+  filter: blur(6px);
+  left: -15px;
+  border-radius: 50%;
+  opacity: 0.6;
 }
 
-/* =======================
-   BOUTONS
-======================= */
-.buttons {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+/* animation */
+@keyframes trailMove {
+  0% {
+    transform: translate(0,0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
+    opacity: 0;
+  }
 }
-
-a.btn,
-a.btn-small {
-    display: block;
-    width: 100%;
-    text-decoration: none;
-    font-weight: 600;
-    padding: 14px;
-    border-radius: 30px;
-    text-align: center;
-    transition: 0.3s;
-}
-
-/* bouton principal */
-a.btn {
-    color: white;
-    background: linear-gradient(135deg, #0F172A, #2563EB, #38BDF8);
-}
-
-/* bouton secondaire */
-a.btn-small {
-    color: #0F172A;
-    border: 2px solid #2563EB;
-}
-
-/* hover */
-a.btn:hover {
-    transform: scale(1.03);
-}
-
-a.btn-small:hover {
-    background: #2563EB;
-    color: white;
-}
-
-/* =======================
-   FOOTER
-======================= */
-footer {
-    text-align: center;
-    padding: 15px;
-    font-size: 0.85rem;
-    color: white;
-    background: rgba(0,0,0,0.4);
-}
-
-footer a {
-    color: #38BDF8;
-    text-decoration: none;
-}
-
-/* =======================
-   TABLETTE
-======================= */
-@media (min-width: 768px) {
-    .card {
-        max-width: 500px;
-        padding: 40px;
-    }
-
-    h2 {
-        font-size: 1.3rem;
-    }
-}
-
-/* =======================
-   DESKTOP
-======================= */
-@media (min-width: 1024px) {
-    .card {
-        max-width: 600px;
-    }
-
-    .buttons {
-        flex-direction: row;
-    }
-
-    a.btn,
-    a.btn-small {
-        width: auto;
-        flex: 1;
-    }
-}
-
 </style>
-</head>
 
+</head>
 <body>
 
-<main class="main-content">
-    <div class="card">
+<img id="logo" src="logo.png" alt="Logo RentMaster">
 
-        <img src="logo.png" alt="Logo RentMaster" class="logo-round">
+<!-- Particules avec effet traînée -->
+<div class="particle" style="--x: 120; --y: -80; background:#1E90FF;"></div>
+<div class="particle" style="--x: -100; --y: 90; background:#00BFFF;"></div>
+<div class="particle" style="--x: 90; --y: 60; background:#87CEFA;"></div>
+<div class="particle" style="--x: -80; --y: -100; background:#ADD8E6;"></div>
+<div class="particle" style="--x: 60; --y: 110; background:#B0E0E6;"></div>
 
-        <h2>La solution intelligente pour vos biens et contrats</h2>
-
-        <div class="buttons">
-            <a href="login-locataire.html" class="btn">Connexion Locataire</a>
-            <a href="login-bailleur.html" class="btn-small">Connexion Bailleur</a>
-        </div>
-
-    </div>
-</main>
-
-<footer>
-    <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
-    <p>
-        Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> |
-        Portfolio : <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Mon Portfolio</a>
-    </p>
-</footer>
+<script>
+setTimeout(() => {
+  window.location.href = "accueil.html";
+}, 2500);
+</script>
 
 </body>
 </html>

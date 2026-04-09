@@ -2,141 +2,104 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Paiement</title>
+<title>Paiement - RentMaster</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-* {
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Segoe UI', sans-serif;
-}
+/* --- RESET & BASE --- */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+body { background:#f4f6f8; color:#1b263b; }
 
-body {
-  background:#f4f6f8;
-  color:#1b263b;
+/* --- MENU HAMBURGER --- */
+.menu-toggle {
+  display:none;
+  position: fixed;
+  top:15px;
+  left:15px;
+  background:#3084d8;
+  color:white;
+  border:none;
+  padding:10px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  z-index:1100;
 }
+.menu-toggle i { font-size:1.2em; }
 
-/* LAYOUT */
+/* --- LAYOUT --- */
 .layout {
   display:flex;
+  min-height:100vh;
 }
 
-/* SIDEBAR FIXE 🔥 */
+/* --- SIDEBAR --- */
 aside {
-  position:fixed;
-  top:0;
-  left:0;
   width:220px;
-  height:100vh;
   background: linear-gradient(to bottom, #3084d8, #4f9cea);
   color:white;
   display:flex;
   flex-direction:column;
   padding:20px;
+  transition: transform 0.3s ease;
 }
 
-aside img {
-  width:60px;
-  border-radius:50%;
-  margin-bottom:20px;
-}
+aside img { width:60px; border-radius:50%; margin-bottom:20px; }
 
 aside a {
-  color:white;
-  text-decoration:none;
-  margin:10px 0;
-  font-weight:600;
-  transition:0.3s;
+  color:white; text-decoration:none; margin:10px 0; font-weight:600; transition:0.3s;
 }
+aside a i { margin-right:8px; }
+aside a:hover { opacity:0.8; }
 
-aside a i {
-  margin-right:8px;
-}
-
-aside a:hover {
-  opacity:0.8;
-}
-
-/* CONTENU À DROITE */
+/* --- CONTENU --- */
 .content {
-  margin-left:220px; /* 🔥 laisse la place du sidebar */
+  flex:1;
+  margin-left:220px; /* espace pour sidebar */
   display:flex;
   flex-direction:column;
-  min-height:100vh;
-  width:100%;
+  transition: margin-left 0.3s ease;
 }
 
-/* MAIN CENTRÉ */
+/* --- MAIN --- */
 main {
   flex:1;
   padding:30px;
   max-width:500px;
   width:100%;
-  margin:auto; /* 🔥 centre */
+  margin:auto;
 }
 
-/* TITRE */
-h1 {
-  margin-bottom:20px;
-  color:#277fd7;
-  text-align:center;
-}
+/* --- TITRE --- */
+h1 { margin-bottom:20px; color:#277fd7; text-align:center; }
 
-/* FORMULAIRE */
-.container {
-  display:flex;
-  flex-direction:column;
-  gap:15px;
-}
+/* --- FORMULAIRE --- */
+.container { display:flex; flex-direction:column; gap:15px; }
+input, select, button { width:100%; padding:12px; border-radius:8px; border:1px solid #ccc; font-size:1em; }
+button { background:#357ABD; color:white; border:none; cursor:pointer; font-weight:600; }
+button:hover { background:#2563eb; }
+.result { background:#e0e0e0; padding:10px; border-radius:8px; text-align:center; font-weight:600; }
 
-/* INPUT */
-input, select, button {
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:1em;
-}
+/* --- FOOTER --- */
+footer { text-align:center; padding:20px; background:#f0f2f5; border-top:1px solid #ddd; font-size:0.9em; margin-top:auto; }
 
-/* BUTTON */
-button {
-  background:#357ABD;
-  color:white;
-  border:none;
-  cursor:pointer;
-  font-weight:600;
+/* --- RESPONSIVE --- */
+@media (max-width:900px){
+  aside { position:fixed; top:0; left:0; height:100vh; transform:translateX(-100%); z-index:1000; }
+  aside.show { transform:translateX(0); }
+  .menu-toggle { display:block; }
+  .content { margin-left:0; }
 }
-
-button:hover {
-  background:#2563eb;
-}
-
-/* RESULT */
-.result {
-  background:#e0e0e0;
-  padding:10px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:600;
-}
-
-/* FOOTER EN BAS */
-footer {
-  text-align:center;
-  padding:20px;
-  background:#f0f2f5;
-  border-top:1px solid #ddd;
-  font-size:0.9em;
-}</style>
+</style>
 </head>
 <body>
-<body>
+
+<!-- BOUTON HAMBURGER -->
+<button class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
 <div class="layout">
 
-  <!-- SIDEBAR FIXE -->
-  <aside>
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
     <img src="logo.png" alt="Logo">
     <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i> Contrat</a>
@@ -147,7 +110,7 @@ footer {
   </aside>
 
   <!-- CONTENU -->
-  <div class="content">
+  <div class="content" id="content">
 
     <main>
       <h1>Paiement</h1>
@@ -178,7 +141,6 @@ footer {
       </div>
     </main>
 
-    <!-- FOOTER -->
     <footer>
       <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
       <p>
@@ -190,13 +152,17 @@ footer {
   </div>
 
 </div>
+
 <script>
+// --- SÉCURITÉ ---
 if(localStorage.getItem("connecte") !== "true"){ window.location.href="login.html"; }
+
 let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
 let userId = localStorage.getItem("userId");
 let locataire = locataires.find(l => l.id == userId);
 let paiements = JSON.parse(localStorage.getItem("paiements")) || [];
 
+// --- CONVERSION ---
 function convertir(){
   let montant = parseFloat(document.getElementById("montant").value)||0;
   let devise = document.getElementById("devise").value;
@@ -205,6 +171,7 @@ function convertir(){
   document.getElementById("conversion").innerText="Montant en USD : "+usd.toFixed(2)+" $";
 }
 
+// --- PAYER ---
 function payer(){
   let montant = parseFloat(document.getElementById("montant").value);
   if(!montant){ alert("Entrer un montant"); return; }
@@ -218,6 +185,11 @@ function payer(){
   document.getElementById("message").innerText="✅ Paiement réussi via "+moyen+" ("+montantUSD.toFixed(2)+"$)";
   document.getElementById("montant").value="";
   document.getElementById("conversion").innerText="Montant en USD : 0 $";
+}
+
+// --- MENU HAMBURGER ---
+function toggleMenu(){
+  document.getElementById("sidebar").classList.toggle("show");
 }
 </script>
 

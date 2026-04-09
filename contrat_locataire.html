@@ -2,26 +2,16 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon Contrat - RentMaster</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 /* --- RESET ET BASE --- */
-* {
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Segoe UI', sans-serif;
-}
-
-body {
-  background:#f0f2f5;
-}
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+body { background:#f0f2f5; }
 
 /* --- LAYOUT GLOBAL --- */
-.container {
-  display:flex;
-  min-height:100vh;
-}
+.container { display:flex; min-height:100vh; }
 
 /* --- SIDEBAR FIXE --- */
 aside {
@@ -35,132 +25,55 @@ aside {
   display:flex;
   flex-direction:column;
   padding:20px;
-}
-
-aside img {
-  width:60px;
-  border-radius:50%;
-  margin-bottom:20px;
-}
-
-aside a {
-  color:white;
-  text-decoration:none;
-  margin:10px 0;
-  font-weight:600;
   transition:0.3s;
+  z-index:1000;
 }
 
-aside a i {
-  margin-right:8px;
-}
+aside img { width:60px; border-radius:50%; margin-bottom:20px; }
+aside a { color:white; text-decoration:none; margin:10px 0; font-weight:600; transition:0.3s; }
+aside a i { margin-right:8px; }
+aside a:hover { opacity:0.8; }
 
-aside a:hover {
-  opacity:0.8;
-}
+/* --- BOUTON MENU MOBILE --- */
+header { display:flex; justify-content:space-between; align-items:center; padding:15px; background:#357ABD; color:white; }
+.menu-toggle { display:none; font-size:1.6em; cursor:pointer; }
 
 /* --- CONTENU GLOBAL --- */
-.content {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  margin-left:220px; /* espace pour le sidebar */
-}
+.content { flex:1; display:flex; flex-direction:column; margin-left:220px; transition:margin-left 0.3s; }
 
 /* --- MAIN CENTRÉ --- */
-main {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center; /* centre horizontalement */
-  padding:30px;
-  width:100%;
-}
+main { flex:1; display:flex; flex-direction:column; align-items:center; padding:30px; width:100%; }
+.main-content { width:100%; max-width:900px; }
 
-/* --- WRAPPER CONTENU --- */
-.main-content {
-  width:100%;
-  max-width:900px; /* largeur max */
-}
-
-/* --- TITRE --- */
-h1 {
-  margin-bottom:15px;
-  color:#34495e;
-  text-align:center;
-}
-
-/* --- ALERT --- */
-.alert {
-  background:#d0e1ff;
-  padding:15px;
-  border-radius:10px;
-  margin-bottom:20px;
-  color:#1b3a8a;
-  text-align:center;
-}
+/* --- TITRE ET ALERT --- */
+h1 { margin-bottom:15px; color:#34495e; text-align:center; }
+.alert { background:#d0e1ff; padding:15px; border-radius:10px; margin-bottom:20px; color:#1b3a8a; text-align:center; }
 
 /* --- CARD --- */
-.card {
-  background:white;
-  border-radius:12px;
-  padding:20px;
-  margin-bottom:15px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.05);
-  width:100%; /* important pour que les boutons fassent toute la largeur */
-}
+.card { background:white; border-radius:12px; padding:20px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); width:100%; }
+button { padding:12px; width:100%; border:none; border-radius:10px; background:#357ABD; color:white; font-weight:600; cursor:pointer; margin-top:10px; }
+button:hover { background:#2563eb; }
 
 /* --- CALENDRIER --- */
-#calendrier {
-  margin-bottom:20px;
-  padding:15px;
-  background:#e6f0ff;
-  border-radius:12px;
-  color:#1b3a8a;
-  font-weight:600;
-  text-align:center;
-}
-
-/* --- BUTTON --- */
-button {
-  padding:12px;
-  width:100%;
-  border:none;
-  border-radius:10px;
-  background:#357ABD;
-  color:white;
-  font-weight:600;
-  cursor:pointer;
-}
-
-button:hover {
-  background:#2563eb;
-}
+#calendrier { margin-bottom:20px; padding:15px; background:#e6f0ff; border-radius:12px; color:#1b3a8a; font-weight:600; text-align:center; }
 
 /* --- LISTE DOCUMENTS --- */
-ul {
-  list-style:none;
-  margin-top:10px;
-}
-
-li {
-  background:#f3f6ff;
-  padding:10px;
-  border-radius:8px;
-  margin-bottom:5px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
+ul { list-style:none; margin-top:10px; }
+li { background:#f3f6ff; padding:10px; border-radius:8px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; }
 
 /* --- FOOTER --- */
-footer {
-  text-align:center;
-  padding:15px;
-  background:#f0f2f5;
-  border-top:1px solid #ddd;
-  font-size:0.9em;
-  margin-top:auto;
+footer { text-align:center; padding:15px; background:#f0f2f5; border-top:1px solid #ddd; font-size:0.9em; margin-top:auto; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:900px){
+  aside { width:0; padding:0; overflow-x:hidden; }
+  aside.show { width:220px; padding:20px; }
+  aside a { opacity:0; transition:opacity 0.3s; }
+  aside.show a { opacity:1; }
+  header .menu-toggle { display:inline-block; }
+  .content { margin-left:0; }
+  main { padding:15px; }
+  .card button { width:100%; }
 }
 </style>
 </head>
@@ -169,7 +82,7 @@ footer {
 <div class="container">
 
   <!-- SIDEBAR -->
-  <aside>
+  <aside id="sidebar">
     <img src="logo.png" alt="Logo RentMaster">
     <a href="dashboard_locataire.html"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i> Contrat</a>
@@ -179,21 +92,19 @@ footer {
     <a href="index.html"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
   </aside>
 
-  <!-- CONTENU -->
   <div class="content">
+    <header>
+      <h2>Mon Contrat</h2>
+      <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+    </header>
 
     <main>
       <div class="main-content">
-        <h1>Mon Contrat</h1>
-
         <div class="alert">
           Il est important de consulter régulièrement votre contrat pour suivre vos échéances et obligations.
         </div>
 
-        <div id="calendrier">
-          📅 Prochaine échéance : 05 Avril 2026
-        </div>
-
+        <div id="calendrier">📅 Prochaine échéance : 05 Avril 2026</div>
         <div id="contratInfo"></div>
 
         <div class="card">
@@ -214,16 +125,18 @@ footer {
       </div>
     </main>
 
-    <!-- FOOTER -->
     <footer>
       &copy; 2026 RentMaster. Tous droits réservés. | Contact: support@rentmaster.com
     </footer>
-
   </div>
-
 </div>
 
 <script>
+// Toggle sidebar mobile
+function toggleSidebar(){
+  document.getElementById("sidebar").classList.toggle("show");
+}
+
 // sécurité
 if(localStorage.getItem("connecte") !== "true"){ window.location.href="login.html"; }
 
@@ -232,9 +145,7 @@ let userId = localStorage.getItem("userId");
 let locataire = locataires.find(l => l.id == userId);
 
 if(!localStorage.getItem("contrats")){
-  let contrats = [
-    {id:1, locataireId:1, bien:"Appartement A", bailleur:"Mr Dupont", montant:500, dateDebut:"01/01/2026", dateFin:"31/12/2026"}
-  ];
+  let contrats = [{id:1, locataireId:1, bien:"Appartement A", bailleur:"Mr Dupont", montant:500, dateDebut:"01/01/2026", dateFin:"31/12/2026"}];
   localStorage.setItem("contrats", JSON.stringify(contrats));
 }
 
@@ -258,7 +169,6 @@ if(contrat){
 
 // documents
 let documents = JSON.parse(localStorage.getItem("documents")) || [];
-
 function afficherDocs(){
   let ul = document.getElementById("listeDocs");
   ul.innerHTML = "";

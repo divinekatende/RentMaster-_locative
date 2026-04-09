@@ -2,10 +2,12 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Historique des paiements</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
+/* --- RESET & BASE --- */
 * {
   margin:0;
   padding:0;
@@ -18,12 +20,28 @@ body {
   color:#1b263b;
 }
 
-/* LAYOUT GLOBAL */
+/* --- HAMBURGER --- */
+.menu-toggle {
+  display:none;
+  position:fixed;
+  top:15px;
+  left:15px;
+  font-size:24px;
+  background:#357ABD;
+  color:white;
+  border:none;
+  border-radius:6px;
+  padding:8px 12px;
+  cursor:pointer;
+  z-index:1100;
+}
+
+/* --- LAYOUT GLOBAL --- */
 .layout {
   display:flex;
 }
 
-/* SIDEBAR FIXE */
+/* --- SIDEBAR FIXE --- */
 aside {
   position:fixed;
   top:0;
@@ -35,6 +53,8 @@ aside {
   display:flex;
   flex-direction:column;
   padding:20px;
+  transition:0.3s;
+  z-index:1000;
 }
 
 aside img {
@@ -49,6 +69,8 @@ aside a {
   margin:10px 0;
   font-weight:600;
   transition:0.3s;
+  display:flex;
+  align-items:center;
 }
 
 aside a i {
@@ -59,19 +81,21 @@ aside a:hover {
   opacity:0.8;
 }
 
-/* CONTENU */
+/* --- CONTENU --- */
 .content {
   margin-left:220px;
   display:flex;
   flex-direction:column;
   min-height:100vh;
   width:100%;
+  transition:0.3s;
+  padding:30px;
 }
 
-/* MAIN CENTRÉ */
+/* --- MAIN CENTRÉ --- */
 main {
   flex:1;
-  padding:30px;
+  padding:20px;
   max-width:800px;
   width:100%;
   margin:auto;
@@ -111,10 +135,31 @@ footer {
   border-top:1px solid #ddd;
   font-size:0.9em;
 }
+
+/* --- RESPONSIVE --- */
+@media (max-width:900px){
+  .menu-toggle { display:block; }
+
+  aside {
+    left:-100%;
+    width:220px;
+    height:100vh;
+  }
+
+  aside.show { left:0; }
+
+  .content {
+    margin-left:0;
+    padding:20px;
+  }
+}
 </style>
 </head>
 
 <body>
+
+<!-- BOUTON HAMBURGER -->
+<button class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
 <div class="layout">
 
@@ -156,12 +201,18 @@ if(localStorage.getItem("connecte") !== "true"){
   window.location.href="login.html";
 }
 
+// TOGGLE SIDEBAR
+function toggleMenu(){
+  document.querySelector('aside').classList.toggle('show');
+}
+
+// HISTORIQUE DES PAIEMENTS
 let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
 let userId = localStorage.getItem("userId");
 let locataire = locataires.find(l => l.id == userId);
 
 let paiements = JSON.parse(localStorage.getItem("paiements")) || [];
-let userPaiements = paiements.filter(p => p.locataireId == locataire.id);
+let userPaiements = locataires.length && locataire ? paiements.filter(p => p.locataireId == locataire.id) : [];
 
 let container = document.getElementById("historiqueContainer");
 

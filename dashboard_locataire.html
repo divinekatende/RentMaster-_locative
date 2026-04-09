@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Locataire - RentMaster</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -16,18 +17,19 @@ body {
 }
 
 /* ===== SIDEBAR ===== */
-
 aside {
-    position: fixed;   /* 🔥 rend le sidebar fixe */
+    position: fixed;
     top: 0;
     left: 0;
     width: 180px;
-    height: 100vh;     /* 🔥 prend toute la hauteur */
+    height: 100vh;
     background: linear-gradient(to bottom, #2e21e6, #40affe, #85c1e9);
     color: white;
     display: flex;
     flex-direction: column;
     padding: 20px 10px;
+    transition: 0.3s;
+    z-index: 1000;
 }
 
 aside img.logo {
@@ -65,8 +67,8 @@ main {
     padding: 25px;
     overflow-y: auto;
     position: relative;
-
-    margin-left: 180px; /* 🔥 espace pour le sidebar */
+    margin-left: 180px;
+    transition: margin-left 0.3s;
 }
 
 /* ===== HEADER ===== */
@@ -82,6 +84,12 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+header .menu-toggle {
+    display: none;
+    font-size: 1.6em;
+    cursor: pointer;
 }
 
 header .top-icons i {
@@ -117,7 +125,6 @@ header .top-icons .badge {
     margin-bottom: 20px;
     transition: 0.3s;
 }
-
 #calendarBtn:hover { background: #1e40af; }
 
 /* ===== WELCOME & INFO ===== */
@@ -135,12 +142,11 @@ header .top-icons .badge {
     line-height: 1.5;
 }
 
-/* Bouton payer */
+/* ===== BOUTON PAYER ===== */
 .btn {
-    margin: 30px auto; /* 🔥 centre horizontalement */
-    display: block;    /* 🔥 obligatoire pour margin auto */
-    width: 250px;      /* 🔥 largeur fixe */
-    
+    margin: 30px auto;
+    display: block;
+    width: 250px;
     padding: 14px;
     border: none;
     border-radius: 12px;
@@ -152,15 +158,12 @@ header .top-icons .badge {
     text-align: center;
     transition: all 0.3s ease;
 }
-
-.btn i {
-    margin-right: 8px;
-}
-
+.btn i { margin-right: 8px; }
 .btn:hover {
     background: linear-gradient(to right, #1e40af, #2563eb);
     transform: scale(1.03);
 }
+
 /* ===== CARDS ===== */
 .cards {
     display: grid;
@@ -183,20 +186,12 @@ header .top-icons .badge {
     box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 }
 
-.card h3 {
-    font-size: 1em;
-    color: #7f8c8d;
-    margin-bottom: 6px;
-}
-
-.card p {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin: 0;
-}
-
+.card h3 { font-size: 1em; color: #7f8c8d; margin-bottom: 6px; }
+.card p { font-size: 1.5em; font-weight: bold; margin: 0; }
 .card p.red { color: red; }
 .card p.green { color: green; }
+
+/* Quick Access */
 .quick-access .quick-btn {
     display: flex;
     flex-direction: column;
@@ -225,24 +220,33 @@ header .top-icons .badge {
     transform: translateY(-3px);
 }
 
-
-
-
 /* ===== RESPONSIVE ===== */
-@media (max-width:900px){
-    aside { width: 60px; padding: 10px; }
-    aside img.logo { display: none; }
-    aside a { justify-content: center; font-size: 0.8em; }
-    main { padding: 15px; margin-left: 0; }
+@media (max-width: 900px){
+    aside {
+        width: 0;
+        padding: 0;
+        overflow-x: hidden;
+        transition: 0.3s;
+    }
+    aside.show {
+        width: 180px;
+        padding: 20px 10px;
+    }
+    aside img.logo { display: inline-block; }
+    aside a { justify-content: flex-start; font-size: 0.9em; opacity: 0; transition: opacity 0.3s; }
+    aside.show a { opacity: 1; }
+    main { margin-left: 0; padding: 15px; }
     .cards { grid-template-columns: 1fr; }
-    footer { width: 100%; margin-left: 0; }
+    header .menu-toggle { display: inline-block; }
+    .quick-access { flex-wrap: wrap; justify-content: space-around; gap: 15px; }
+    .btn { width: 100%; max-width: 300px; }
 }
 </style>
 </head>
 <body>
 
 <!-- SIDEBAR -->
-<aside>
+<aside id="sidebar">
   <img src="logo.png" alt="Logo RentMaster" class="logo">
   <a href="dashboard_locataire.html"><i class="fas fa-home"></i>Dashboard</a>
   <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i>Contrat</a>
@@ -255,10 +259,7 @@ header .top-icons .badge {
 <main>
 <header>
     <span>Dashboard Locataire</span>
-    <span class="top-icons">
-        <i class="fas fa-envelope"><span class="badge" id="msgBadge">0</span></i>
-        <i class="fas fa-bell"><span class="badge" id="notifBadge">0</span></i>
-    </span>
+    <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
 </header>
 
 <!-- Calendrier -->
@@ -268,24 +269,20 @@ header .top-icons .badge {
 
 <!-- Bienvenue & info -->
 <div id="welcome"></div>
-
 <div class="info-text">
-    Bienvenue sur votre dashboard ! Consultez régulièrement vos informations pour suivre le statut de vos paiements, les échéances de votre loyer et rester à jour avec vos notifications importantes.
+    Bienvenue sur votre dashboard ! Consultez vos informations pour suivre le statut de vos paiements, les échéances et notifications importantes.
 </div>
 
-<!-- Informations -->
 <!-- Informations -->
 <div class="cards">
   <div class="card">
     <h3>Loyer à payer</h3>
     <p>500$</p>
   </div>
-
   <div class="card">
     <h3>Prochaine échéance</h3>
     <p>05 Avril 2026</p>
   </div>
-
   <div class="card">
     <h3>Statut</h3>
     <p class="red">Non payé</p>
@@ -297,7 +294,7 @@ header .top-icons .badge {
     <i class="fas fa-credit-card"></i> Payer maintenant
 </button>
 
-<!-- Section accès rapide -->
+<!-- Accès rapide -->
 <div class="quick-access" style="display:flex; justify-content:space-around; margin:30px 0;">
     <button class="quick-btn" onclick="window.location.href='message_locataire.html'">
         <i class="fas fa-envelope"></i><br>Messages
@@ -313,13 +310,17 @@ header .top-icons .badge {
 <!-- Footer -->
 <footer style="text-align:center; padding:20px; background:#f0f2f5; border-top:1px solid #ddd; color:#1b263b; margin-top:50px;">
     <p>&copy; 2026 RentMaster. Tous droits réservés.</p>
-  <p>
-    Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> | 
-    Portfolio : <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Mon Portfolio</a>
-  </p>
+    <p>Contact : <a href="mailto:divinekatende23@gmail.com">divinekatende23@gmail.com</a> | 
+       Portfolio : <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Mon Portfolio</a>
+    </p>
 </footer>
 
 <script>
+// Toggle sidebar mobile
+function toggleSidebar(){
+    document.getElementById("sidebar").classList.toggle("show");
+}
+
 // sécurité
 if (localStorage.getItem("connecte") !== "true") {
     window.location.href = "login.html";
@@ -337,9 +338,6 @@ document.getElementById("welcome").innerText =
 // badges
 let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
 let messages = JSON.parse(localStorage.getItem("messages")) || [];
-
-document.getElementById("notifBadge").innerText = notifications.length || 0;
-document.getElementById("msgBadge").innerText = messages.length || 0;
 </script>
 
 </body>

@@ -191,7 +191,7 @@ footer {
 <main class="container">
 
     <!-- Logo -->
-    <img src="logo.png" alt="Logo RentMaster" class="logo">
+    <img src="image/logo.png" alt="Logo RentMaster" class="logo">
 
     <!-- Titre -->
     <h2 class="page-title">Connexion Bailleur</h2>
@@ -227,18 +227,38 @@ footer {
 <script>
 function connexion(event){
     event.preventDefault();
+
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
+    const msg = document.getElementById("messageErreur");
 
     if(email === "" || password === ""){
-        const msg = document.getElementById("messageErreur");
         msg.textContent = "Veuillez remplir tous les champs";
         msg.className = "error";
         return;
     }
 
-    // Redirection après connexion
-    window.location.href = "dashboard.html";
+    // =========================
+    // BAILLEUR
+    // =========================
+    if(email === "divinekatende23@gmail.com" && password === "1213"){
+        window.location.href = "bailleur/dashboard.html";
+        return;
+    }
+
+    // =========================
+    // ADMIN
+    // =========================
+    if(email === "divinekatende23@gmail.com" && password === "1990"){
+        window.location.href = "administrateur/biometric.html";
+        return;
+    }
+
+    // =========================
+    // ERREUR
+    // =========================
+    msg.textContent = "Email ou mot de passe incorrect";
+    msg.className = "error";
 }
 </script>
 

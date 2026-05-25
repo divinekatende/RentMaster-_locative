@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentMaster | Connexion Locataire</title>
+
+<style>
+
+/* =========================
+   RESET
+========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+/* =========================
+   BODY (IMAGE DE FOND AJOUTÉE)
+========================= */
+body {
+    min-height: 100vh;
+
+    /* 🔥 IMAGE DE FOND */
+    background-image: url("../../../public/assets/images/fond.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+}
+
+/* =========================
+   CONTAINER
+========================= */
+.container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 420px;
+
+    padding: 35px 30px;
+    border-radius: 16px;
+
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* =========================
+   LOGO (AGRANDI)
+========================= */
+.logo {
+    width: 180px;   /* 🔥 AGRANDI */
+    height: auto;
+    margin: 0 auto;
+}
+
+/* =========================
+   TITRES
+========================= */
+.app-name {
+    font-size: 26px;
+    color: #2563eb;
+}
+
+.page-title {
+    font-size: 18px;
+    color: #333;
+}
+
+/* =========================
+   FORM
+========================= */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: left;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.form-group input:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+
+/* =========================
+   BOUTON
+========================= */
+button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #2563eb;
+    color: white;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #1e40af;
+    transform: translateY(-2px);
+}
+
+/* =========================
+   LIENS
+========================= */
+.links {
+    text-align: center;
+    font-size: 14px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+footer {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 480px) {
+    .container {
+        padding: 25px 20px;
+    }
+
+    .logo {
+        width: 140px; /* responsive logo */
+    }
+
+    .app-name {
+        font-size: 22px;
+    }
+
+    .page-title {
+        font-size: 16px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<main class="container">
+
+    <!-- Logo AGRANDI -->
+    <img src="../../../public/assets/images/logo.png" alt="Logo RentMaster" class="logo">
+
+
+    <h2 class="page-title">Connexion Locataire</h2>
+
+    <form class="form" onsubmit="connexion(event)">
+
+        <div class="form-group">
+            <input type="text" id="matricule" placeholder="Matricule" required>
+        </div>
+
+        <div class="form-group">
+            <input type="password" id="password" placeholder="Mot de passe" required>
+        </div>
+
+        <button type="submit">Se connecter</button>
+
+    </form>
+
+    <div class="links">
+        <p><a href="../../../index.html">← Retour à l’accueil</a></p>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 RentMaster</p>
+    </footer>
+
+</main>
+
+<script>
+function connexion(event) {
+    event.preventDefault();
+
+    let matricule = document.getElementById("matricule").value;
+    let password = document.getElementById("password").value;
+    let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
+
+    let utilisateur = locataires.find(l => l.matricule === matricule && l.password === password);
+
+    if (utilisateur) {
+        localStorage.setItem("connecte", "true");
+        localStorage.setItem("userId", utilisateur.id);
+        window.location.href = "dashboard_locataire.html";
+    } else {
+        alert("Matricule ou mot de passe incorrect !");
+    }
+}
+</script>
+
+</body>
+</html>

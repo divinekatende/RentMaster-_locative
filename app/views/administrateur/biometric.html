@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face ID - RentMaster</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI', sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#020617,#0f172a,#1e293b);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    color:white;
+}
+
+/* ================= CARD ================= */
+.container{
+    width:400px;
+    background:rgba(15,23,42,0.9);
+    border:1px solid rgba(255,255,255,0.08);
+    backdrop-filter:blur(12px);
+    border-radius:25px;
+    padding:30px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+    position:relative;
+}
+
+/* ================= FACE SCAN ================= */
+.scan-box{
+    width:230px;
+    height:230px;
+    margin:auto;
+    border-radius:20px;
+    overflow:hidden;
+    position:relative;
+    border:3px solid #3b82f6;
+    box-shadow:0 0 25px rgba(59,130,246,0.5);
+}
+
+video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* ================= SCAN EFFECT ================= */
+.scan-line{
+    position:absolute;
+    width:100%;
+    height:4px;
+    background:#38bdf8;
+    box-shadow:0 0 20px #38bdf8;
+    animation:scan 2s linear infinite;
+}
+
+@keyframes scan{
+    0%{top:0;}
+    100%{top:100%;}
+}
+
+/* ================= FACE FRAME ================= */
+.face-frame{
+    position:absolute;
+    inset:20px;
+    border:2px solid rgba(255,255,255,0.7);
+    border-radius:20px;
+}
+
+/* ================= TEXT ================= */
+h2{
+    margin-top:25px;
+    font-size:26px;
+}
+
+p{
+    margin-top:10px;
+    color:#94a3b8;
+    font-size:14px;
+    line-height:1.5;
+}
+
+/* ================= BUTTON ================= */
+button{
+    margin-top:25px;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,#2563eb,#38bdf8);
+    color:white;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(37,99,235,0.4);
+}
+
+/* ================= STATUS ================= */
+.status{
+    margin-top:15px;
+    font-size:14px;
+    color:#38bdf8;
+}
+
+.success{
+    color:#22c55e;
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:500px){
+
+    .container{
+        width:95%;
+        padding:20px;
+    }
+
+    .scan-box{
+        width:200px;
+        height:200px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="scan-box">
+
+        <video id="video" autoplay playsinline></video>
+
+        <div class="scan-line"></div>
+
+        <div class="face-frame"></div>
+
+    </div>
+
+    <h2><i class="fa-solid fa-face-smile"></i> Face ID</h2>
+
+    <p>
+        Positionnez votre visage dans le cadre pour accéder à votre espace sécurisé RentMaster.
+    </p>
+
+    <div class="status" id="status">
+        Activation de la caméra...
+    </div>
+
+    <button onclick="validateFace()">
+        <i class="fa-solid fa-lock-open"></i>
+        Continuer
+    </button>
+
+</div>
+
+<script>
+
+const video = document.getElementById("video");
+const statusText = document.getElementById("status");
+
+/* ================= CAMERA ================= */
+async function startCamera(){
+
+    try{
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video:{
+                facingMode:"user"
+            },
+            audio:false
+        });
+
+        video.srcObject = stream;
+
+        statusText.innerHTML = "Caméra activée ✔";
+
+    }catch(error){
+
+        statusText.innerHTML = "Accès caméra refusé ❌";
+        console.error(error);
+
+    }
+
+}
+
+startCamera();
+
+/* ================= VALIDATION ================= */
+function validateFace(){
+
+    if(video.srcObject){
+
+        statusText.innerHTML = "Visage détecté ✔";
+        statusText.classList.add("success");
+
+        setTimeout(()=>{
+
+            window.location.href = "dashboard.html";
+
+        },1500);
+
+    }else{
+
+        alert("Caméra non détectée");
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

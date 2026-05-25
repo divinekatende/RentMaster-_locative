@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messagerie - RentMaster</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:#f4f8ff;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+}
+
+/* HEADER */
+
+.header{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:white;
+    padding:18px;
+    text-align:center;
+    font-size:22px;
+    font-weight:600;
+    box-shadow:0 4px 15px rgba(37,99,235,.2);
+}
+
+/* NAV */
+
+nav{
+    background:white;
+    display:flex;
+    justify-content:center;
+    gap:25px;
+    padding:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+    flex-wrap:wrap;
+}
+
+nav a{
+    text-decoration:none;
+    color:#2563eb;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    transition:.3s;
+}
+
+nav a:hover{
+    transform:translateY(-3px);
+}
+
+/* CHAT */
+
+#chatContainer{
+    flex:1;
+    max-width:900px;
+    width:100%;
+    margin:auto;
+    padding:20px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+/* MESSAGE */
+
+.message{
+    max-width:75%;
+    padding:15px;
+    border-radius:18px;
+    position:relative;
+    animation:fade .3s ease;
+}
+
+@keyframes fade{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.proprietaire{
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+    color:white;
+    margin-left:auto;
+}
+
+.locataire{
+    background:white;
+    border:1px solid #dbeafe;
+    color:#1e293b;
+}
+
+/* INFOS */
+
+.info{
+    font-size:12px;
+    margin-bottom:8px;
+    opacity:.8;
+}
+
+.date{
+    font-size:11px;
+    margin-top:8px;
+    opacity:.7;
+    text-align:right;
+}
+
+/* DELETE */
+
+.delete-btn{
+    position:absolute;
+    top:10px;
+    right:10px;
+    cursor:pointer;
+    opacity:.7;
+    transition:.3s;
+}
+
+.delete-btn:hover{
+    color:#ef4444;
+    opacity:1;
+}
+
+/* FORM */
+
+#formMessage{
+    background:white;
+    padding:15px;
+    display:flex;
+    gap:10px;
+    box-shadow:0 -2px 10px rgba(0,0,0,.05);
+}
+
+select,
+textarea{
+    border:1px solid #dbeafe;
+    border-radius:12px;
+    padding:12px;
+    outline:none;
+}
+
+select{
+    width:180px;
+}
+
+textarea{
+    flex:1;
+    resize:none;
+}
+
+textarea:focus,
+select:focus{
+    border-color:#2563eb;
+}
+
+/* BUTTON */
+
+button{
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:600;
+    transition:.3s;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+/* RESPONSIVE */
+
+@media(max-width:700px){
+
+    #formMessage{
+        flex-direction:column;
+    }
+
+    select{
+        width:100%;
+    }
+
+    .message{
+        max-width:100%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    💬 Messagerie RentMaster
+</div>
+
+<nav>
+
+    <a href="dashboard_locataire.html">
+        <i class="fas fa-chart-line"></i>
+        Dashboard
+    </a>
+
+    <a href="contrat_locataire.html">
+        <i class="fas fa-file-contract"></i>
+        Contrats
+    </a>
+
+    <a href="guide.html">
+        <i class="fas fa-book"></i>
+        Guide
+    </a>
+
+    <a href="notification_locataire.html">
+        <i class="fas fa-bell"></i>
+        Notifications
+    </a>
+
+</nav>
+
+<div id="chatContainer"></div>
+
+<div id="formMessage">
+
+    <select id="locataireSelect"></select>
+
+    <textarea id="messageText" rows="2" placeholder="Écrire un message..."></textarea>
+
+    <button onclick="envoyerMessage()">
+        <i class="fas fa-paper-plane"></i>
+    </button>
+
+</div>
+
+<script>
+
+let locataires = JSON.parse(localStorage.getItem("locataires")) || [
+
+    {
+        id:1,
+        nom:"Ketsia",
+        prenom:"Divine"
+    }
+
+];
+
+let messages = JSON.parse(localStorage.getItem("messages")) || [];
+
+const nomProprietaire = "Propriétaire";
+
+const select = document.getElementById("locataireSelect");
+
+locataires.forEach(l=>{
+
+    select.innerHTML += `
+        <option value="${l.id}">
+            ${l.nom} ${l.prenom}
+        </option>
+    `;
+});
+
+function afficherMessages(){
+
+    let container = document.getElementById("chatContainer");
+
+    container.innerHTML = "";
+
+    if(messages.length === 0){
+
+        container.innerHTML = `
+            <p style="text-align:center;color:#64748b;">
+                Aucun message
+            </p>
+        `;
+
+        return;
+    }
+
+    messages.forEach((m,index)=>{
+
+        container.innerHTML += `
+
+        <div class="message ${m.deNom === nomProprietaire ? 'proprietaire' : 'locataire'}">
+
+            <div class="info">
+                ${m.deNom} → ${m.aNom}
+            </div>
+
+            ${m.text}
+
+            <div class="date">
+                ${m.date}
+            </div>
+
+            <i class="fas fa-trash delete-btn"
+               onclick="supprimerMessage(${index})">
+            </i>
+
+        </div>
+        `;
+    });
+
+    container.scrollTop = container.scrollHeight;
+}
+
+function envoyerMessage(){
+
+    let id = select.value;
+
+    let texte = document.getElementById("messageText").value.trim();
+
+    if(!texte){
+
+        alert("Écris un message !");
+        return;
+    }
+
+    let loc = locataires.find(l=>l.id == id);
+
+    messages.push({
+
+        deNom:nomProprietaire,
+
+        aNom:loc.nom + " " + loc.prenom,
+
+        text:texte,
+
+        date:new Date().toLocaleString()
+
+    });
+
+    localStorage.setItem("messages",JSON.stringify(messages));
+
+    document.getElementById("messageText").value = "";
+
+    afficherMessages();
+}
+
+function supprimerMessage(index){
+
+    messages.splice(index,1);
+
+    localStorage.setItem("messages",JSON.stringify(messages));
+
+    afficherMessages();
+}
+
+afficherMessages();
+
+</script>
+
+</body>
+</html>

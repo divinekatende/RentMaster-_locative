@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentMaster Admin</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+:root{
+    --blue:#2563eb;
+    --blue2:#3b82f6;
+    --white:#fff;
+    --bg:#f4f7fb;
+    --text:#1e293b;
+    --border:#dbeafe;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,sans-serif;
+}
+
+body{
+    background:var(--bg);
+    color:var(--text);
+}
+
+/* LAYOUT */
+
+.layout{
+    display:flex;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+    width:240px;
+    height:100vh;
+    background:linear-gradient(180deg,var(--blue),#60a5fa);
+    color:white;
+    position:fixed;
+    padding:20px;
+    transition:.3s;
+    z-index:1000;
+}
+
+.logo{
+    text-align:center;
+    margin-bottom:35px;
+}
+
+.logo-box{
+    width:70px;
+    height:70px;
+    margin:auto;
+    border-radius:20px;
+    background:white;
+    color:var(--blue);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    font-weight:bold;
+    margin-bottom:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+}
+
+.logo h2{
+    font-size:22px;
+}
+
+.logo p{
+    opacity:.8;
+    font-size:14px;
+}
+
+.sidebar ul{
+    list-style:none;
+}
+
+.sidebar li{
+    padding:14px;
+    margin-bottom:12px;
+    border-radius:14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    transition:.3s;
+    font-weight:600;
+}
+
+.sidebar li:hover{
+    background:rgba(255,255,255,.2);
+    transform:translateX(5px);
+}
+
+/* MAIN */
+
+.main{
+    margin-left:240px;
+    width:100%;
+    padding:25px;
+}
+
+/* HEADER */
+
+.header{
+    background:white;
+    padding:18px 22px;
+    border-radius:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+
+.header h1{
+    font-size:24px;
+}
+
+.header p{
+    color:#64748b;
+    margin-top:5px;
+}
+
+.theme-btn{
+    width:45px;
+    height:45px;
+    border:none;
+    border-radius:12px;
+    background:var(--blue);
+    color:white;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.theme-btn:hover{
+    transform:scale(1.08);
+    background:#1d4ed8;
+}
+
+/* MENU BTN */
+
+.menu-btn{
+    display:none;
+    font-size:24px;
+    cursor:pointer;
+    color:var(--blue);
+    margin-right:10px;
+}
+
+/* CARDS */
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    padding:22px;
+    border-radius:18px;
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+    transition:.3s;
+    border:1px solid var(--border);
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.card-top i{
+    width:50px;
+    height:50px;
+    border-radius:14px;
+    background:#dbeafe;
+    color:var(--blue);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+}
+
+.card h3{
+    font-size:15px;
+    color:#64748b;
+}
+
+.card h2{
+    font-size:30px;
+    margin-top:10px;
+}
+
+/* TABLE */
+
+.table-box{
+    margin-top:25px;
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+
+.table-header{
+    padding:18px 20px;
+    border-bottom:1px solid #eee;
+    font-weight:bold;
+    color:var(--blue);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#eff6ff;
+    color:var(--blue);
+}
+
+th,td{
+    padding:15px;
+    text-align:left;
+    border-bottom:1px solid #eee;
+}
+
+.status{
+    padding:6px 12px;
+    border-radius:20px;
+    background:#dcfce7;
+    color:#16a34a;
+    font-size:13px;
+    font-weight:bold;
+}
+
+/* DARK MODE */
+
+.dark{
+    --bg:#0f172a;
+    --white:#1e293b;
+    --text:#fff;
+    --border:#334155;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:850px){
+
+    .sidebar{
+        left:-250px;
+    }
+
+    .sidebar.show{
+        left:0;
+    }
+
+    .main{
+        margin-left:0;
+    }
+
+    .menu-btn{
+        display:inline-block;
+    }
+
+    .header{
+        flex-wrap:wrap;
+        gap:15px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar" id="sidebar">
+
+        <div class="logo">
+            <div class="logo-box">RM</div>
+            <h2>RentMaster</h2>
+            <p>Administration</p>
+        </div>
+
+        <ul>
+            <li onclick="go('dashboard.html')">
+                <i class="fas fa-chart-line"></i>
+                Dashboard
+            </li>
+
+            <li onclick="go('gestion.html')">
+                <i class="fas fa-building"></i>
+                Gestion
+            </li>
+
+            <li onclick="go('settings.html')">
+                <i class="fas fa-gear"></i>
+                Paramètres
+            </li>
+
+            <li onclick="logout()">
+                <i class="fas fa-right-from-bracket"></i>
+                Déconnexion
+            </li>
+        </ul>
+
+    </aside>
+
+    <!-- MAIN -->
+
+    <main class="main">
+
+        <!-- HEADER -->
+
+        <div class="header">
+
+            <div style="display:flex;align-items:center;">
+                <i class="fas fa-bars menu-btn" onclick="toggleMenu()"></i>
+
+                <div>
+                    <h1>Dashboard Admin</h1>
+                    <p>Vue générale de la plateforme</p>
+                </div>
+            </div>
+
+            <button class="theme-btn" onclick="toggleTheme()">
+                <i class="fas fa-moon"></i>
+            </button>
+
+        </div>
+
+        <!-- CARDS -->
+
+        <div class="cards">
+
+            <div class="card">
+                <div class="card-top">
+                    <div>
+                        <h3>Bailleurs</h3>
+                        <h2>120</h2>
+                    </div>
+
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-top">
+                    <div>
+                        <h3>Propriétés</h3>
+                        <h2>340</h2>
+                    </div>
+
+                    <i class="fas fa-building"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-top">
+                    <div>
+                        <h3>Contrats</h3>
+                        <h2>89</h2>
+                    </div>
+
+                    <i class="fas fa-file-contract"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-top">
+                    <div>
+                        <h3>Revenus</h3>
+                        <h2>$12K</h2>
+                    </div>
+
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TABLE -->
+
+        <div class="table-box">
+
+            <div class="table-header">
+                Activités récentes
+            </div>
+
+            <table>
+
+                <tr>
+                    <th>Bailleur</th>
+                    <th>Action</th>
+                    <th>Statut</th>
+                </tr>
+
+                <tr>
+                    <td>Jean K.</td>
+                    <td>Ajout propriété</td>
+                    <td><span class="status">Actif</span></td>
+                </tr>
+
+                <tr>
+                    <td>Ketsia D.</td>
+                    <td>Nouveau contrat</td>
+                    <td><span class="status">Validé</span></td>
+                </tr>
+
+                <tr>
+                    <td>Paul M.</td>
+                    <td>Paiement reçu</td>
+                    <td><span class="status">Terminé</span></td>
+                </tr>
+
+            </table>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+function go(page){
+    window.location.href = page;
+}
+
+function toggleMenu(){
+    document.getElementById("sidebar").classList.toggle("show");
+}
+
+function toggleTheme(){
+    document.body.classList.toggle("dark");
+}
+
+function logout(){
+    alert("Déconnexion réussie");
+    window.location.href="../index.html";
+}
+
+</script>
+
+</body>
+</html>

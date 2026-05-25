@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentMaster - Settings</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+/* ================= GOOGLE FONT ================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ================= VARIABLES ================= */
+:root{
+    --bg:#f4f7fe;
+    --white:#ffffff;
+    --primary:#2563eb;
+    --primary-dark:#1746b3;
+    --text:#1e293b;
+    --gray:#64748b;
+    --border:#dbe4f0;
+    --sidebar:#0f172a;
+    --card-shadow:0 10px 30px rgba(37,99,235,0.08);
+}
+
+.dark{
+    --bg:#0f172a;
+    --white:#1e293b;
+    --text:#ffffff;
+    --gray:#cbd5e1;
+    --border:#334155;
+    --sidebar:#020617;
+}
+
+/* ================= RESET ================= */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+body{
+    background:var(--bg);
+    color:var(--text);
+}
+
+/* ================= LAYOUT ================= */
+.layout{
+    display:flex;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar{
+    width:260px;
+    height:100vh;
+    background:linear-gradient(180deg,#0f172a,#1e3a8a);
+    color:white;
+    padding:25px 18px;
+    position:fixed;
+    top:0;
+    left:0;
+    transition:0.3s;
+    z-index:1000;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:35px;
+}
+
+.logo-box{
+    width:45px;
+    height:45px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.logo h2{
+    font-size:20px;
+}
+
+.logo span{
+    font-size:12px;
+    opacity:0.8;
+}
+
+/* MENU */
+.sidebar ul{
+    list-style:none;
+}
+
+.sidebar ul li{
+    padding:14px;
+    margin-bottom:10px;
+    border-radius:12px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    transition:0.3s;
+    font-weight:500;
+}
+
+.sidebar ul li:hover{
+    background:rgba(255,255,255,0.12);
+    transform:translateX(5px);
+}
+
+.sidebar ul li i{
+    font-size:16px;
+}
+
+/* ================= MAIN ================= */
+.main{
+    margin-left:260px;
+    width:calc(100% - 260px);
+    min-height:100vh;
+}
+
+/* ================= HEADER ================= */
+.header{
+    background:var(--white);
+    padding:18px 25px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    position:sticky;
+    top:0;
+    z-index:100;
+}
+
+.title{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.title h1{
+    font-size:24px;
+}
+
+.title p{
+    color:var(--gray);
+    font-size:14px;
+}
+
+/* ================= MENU BTN ================= */
+.menu-btn{
+    display:none;
+    font-size:22px;
+    cursor:pointer;
+}
+
+/* ================= ACTION BUTTON ================= */
+.theme-btn{
+    width:45px;
+    height:45px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:white;
+    cursor:pointer;
+    transition:0.3s;
+    font-size:18px;
+}
+
+.theme-btn:hover{
+    transform:scale(1.08);
+}
+
+/* ================= CONTAINER ================= */
+.container{
+    padding:25px;
+    display:grid;
+    gap:20px;
+}
+
+/* ================= CARDS ================= */
+.card{
+    background:var(--white);
+    padding:25px;
+    border-radius:18px;
+    box-shadow:var(--card-shadow);
+    border:1px solid var(--border);
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-3px);
+}
+
+.card h3{
+    margin-bottom:20px;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+/* ================= FORM ================= */
+.form{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+    margin-bottom:15px;
+}
+
+input,
+select{
+    padding:14px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    outline:none;
+    transition:0.3s;
+    font-size:14px;
+}
+
+input:focus,
+select:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(37,99,235,0.1);
+}
+
+/* ================= BUTTON ================= */
+button{
+    border:none;
+    padding:14px 20px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    background:linear-gradient(135deg,#1746b3,#2563eb);
+}
+
+/* ================= LOGS ================= */
+.logs{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.log{
+    background:#eff6ff;
+    padding:14px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:#1e3a8a;
+    border-left:5px solid #2563eb;
+}
+
+.dark .log{
+    background:#1e293b;
+    color:#cbd5e1;
+}
+
+/* ================= STATUS ================= */
+.success{
+    color:#16a34a;
+}
+
+.warning{
+    color:#f59e0b;
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:900px){
+
+    .sidebar{
+        left:-260px;
+    }
+
+    .sidebar.active{
+        left:0;
+    }
+
+    .main{
+        margin-left:0;
+        width:100%;
+    }
+
+    .menu-btn{
+        display:block;
+    }
+
+    .form{
+        grid-template-columns:1fr;
+    }
+
+    .header{
+        padding:15px;
+    }
+
+    .container{
+        padding:15px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+<!-- ================= SIDEBAR ================= -->
+<aside class="sidebar" id="sidebar">
+
+    <div class="logo">
+        <div class="logo-box">RM</div>
+        <div>
+            <h2>RentMaster</h2>
+            <span>ADMIN PANEL</span>
+        </div>
+    </div>
+
+    <ul>
+        <li onclick="go('dashboard.html')">
+            <i class="fa fa-chart-line"></i> Dashboard
+        </li>
+
+        <li onclick="go('gestion.html')">
+            <i class="fa fa-building"></i> Gestion
+        </li>
+
+        <li onclick="go('settings.html')">
+            <i class="fa fa-gear"></i> Paramètres
+        </li>
+
+        <li onclick="logout()">
+            <i class="fa fa-right-from-bracket"></i> Déconnexion
+        </li>
+    </ul>
+
+</aside>
+
+<!-- ================= MAIN ================= -->
+<div class="main">
+
+    <!-- HEADER -->
+    <div class="header">
+
+        <div class="title">
+
+            <span class="menu-btn" onclick="toggleMenu()">
+                <i class="fa-solid fa-bars"></i>
+            </span>
+
+            <div>
+                <h1>Paramètres</h1>
+                <p>Gestion complète du système RentMaster</p>
+            </div>
+
+        </div>
+
+        <button class="theme-btn" onclick="toggleTheme()">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+
+    </div>
+
+    <!-- CONTAINER -->
+    <div class="container">
+
+        <!-- PROFIL -->
+        <div class="card">
+
+            <h3>
+                <i class="fa fa-user"></i>
+                Profil Administrateur
+            </h3>
+
+            <div class="form">
+                <input type="text" placeholder="Nom administrateur" value="Admin RentMaster">
+                <input type="email" placeholder="Adresse email">
+            </div>
+
+            <button onclick="showMessage('Profil mis à jour')">
+                Mettre à jour
+            </button>
+
+        </div>
+
+        <!-- SECURITE -->
+        <div class="card">
+
+            <h3>
+                <i class="fa fa-lock"></i>
+                Sécurité
+            </h3>
+
+            <div class="form">
+                <input type="password" placeholder="Ancien mot de passe">
+                <input type="password" placeholder="Nouveau mot de passe">
+            </div>
+
+            <button onclick="showMessage('Mot de passe modifié')">
+                Changer mot de passe
+            </button>
+
+        </div>
+
+        <!-- ACCES -->
+        <div class="card">
+
+            <h3>
+                <i class="fa fa-users"></i>
+                Gestion des accès
+            </h3>
+
+            <div class="form">
+
+                <select>
+                    <option>Administrateur</option>
+                    <option>Gestionnaire</option>
+                    <option>Lecteur</option>
+                </select>
+
+                <input type="email" placeholder="Email utilisateur">
+
+            </div>
+
+            <button onclick="showMessage('Nouvel accès ajouté')">
+                Ajouter accès
+            </button>
+
+        </div>
+
+        <!-- CONFIG -->
+        <div class="card">
+
+            <h3>
+                <i class="fa fa-sliders"></i>
+                Configuration système
+            </h3>
+
+            <div class="form">
+                <input type="text" value="RentMaster">
+                <input type="text" value="$">
+            </div>
+
+            <button onclick="showMessage('Configuration enregistrée')">
+                Enregistrer
+            </button>
+
+        </div>
+
+        <!-- LOGS -->
+        <div class="card">
+
+            <h3>
+                <i class="fa fa-clock-rotate-left"></i>
+                Activités récentes
+            </h3>
+
+            <div class="logs">
+
+                <div class="log">
+                    <i class="fa fa-circle-check success"></i>
+                    Administrateur connecté avec succès
+                </div>
+
+                <div class="log">
+                    <i class="fa fa-building success"></i>
+                    Nouveau bailleur ajouté
+                </div>
+
+                <div class="log">
+                    <i class="fa fa-file-contract success"></i>
+                    Contrat généré automatiquement
+                </div>
+
+                <div class="log">
+                    <i class="fa fa-triangle-exclamation warning"></i>
+                    Tentative de connexion échouée
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<script>
+
+/* ================= MENU MOBILE ================= */
+function toggleMenu(){
+    document.getElementById("sidebar").classList.toggle("active");
+}
+
+/* ================= NAVIGATION ================= */
+function go(page){
+    window.location.href = page;
+}
+
+/* ================= LOGOUT ================= */
+function logout(){
+
+    if(confirm("Voulez-vous vous déconnecter ?")){
+        alert("Déconnexion réussie");
+        window.location.href = "login.html";
+    }
+
+}
+
+/* ================= THEME ================= */
+function toggleTheme(){
+    document.body.classList.toggle("dark");
+}
+
+/* ================= MESSAGE ================= */
+function showMessage(message){
+    alert(message);
+}
+
+</script>
+
+</body>
+</html>

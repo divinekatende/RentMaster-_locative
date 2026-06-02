@@ -1,3 +1,12 @@
+<?php
+
+require_once __DIR__ . '/../../auth/session.php';
+
+verifierConnexion();
+verifierRole(['locataire']);
+
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -273,16 +282,42 @@ footer{
 <aside id="sidebar">
 
 <div class="logo">
+
 <img src="../../../public/assets/images/logo.png">
+
 <h2>RentMaster</h2>
+
 </div>
 
-<a href="dashboard_locataire.html"><i class="fas fa-home"></i>Dashboard</a>
-  <a href="contrat_locataire.html"><i class="fas fa-file-contract"></i>Contrat</a>
-  <a href="paiement_locataire.html"><i class="fas fa-credit-card"></i>Paiement</a>
-  <a href="historique.html"><i class="fas fa-history"></i>Historique</a>
-  <a href="profil_locataire.html"><i class="fas fa-user"></i>Profil</a>
-  <a href="../../../index.html"><i class="fas fa-sign-out-alt"></i>Déconnexion</a>
+<a class="active" href="dashboard.php">
+<i class="fas fa-home"></i>
+Dashboard
+</a>
+
+<a href="contrat_locataire.php">
+<i class="fas fa-file-contract"></i>
+Contrat
+</a>
+
+<a href="paiement_locataire.php">
+<i class="fas fa-credit-card"></i>
+Paiement
+</a>
+
+<a href="historique.php">
+<i class="fas fa-history"></i>
+Historique
+</a>
+
+<a href="profil_locataire.php">
+<i class="fas fa-user"></i>
+Profil
+</a>
+
+<a href="../../controllers/logout.php">
+    <i class="fas fa-sign-out-alt"></i>
+    Déconnexion
+</a>
 
 </aside>
 
@@ -304,10 +339,17 @@ footer{
 
 <div class="welcome">
 
-<h2 id="welcomeText">Bonjour 👋</h2>
+<h2>
+
+<h2>
+Bienvenue
+<?= $_SESSION['prenom'] . ' ' . $_SESSION['nom']; ?>
+</h2>
+
+</h2>
 
 <p>
-Bienvenue sur votre espace locataire RentMaster.
+Sur votre espace locataire RentMaster.
 Suivez vos paiements et vos contrats facilement.
 </p>
 
@@ -352,38 +394,55 @@ Suivez vos paiements et vos contrats facilement.
 <!-- BUTTON -->
 
 <button class="btn" onclick="payer()" id="payBtn">
+
 <i class="fas fa-credit-card"></i>
- Payer maintenant
+
+Payer maintenant
+
 </button>
 
 <!-- QUICK ACCESS -->
 
 <div class="quick">
 
-<button class="quick-btn" onclick="goPage('message_locataire.html')">
+<button class="quick-btn" onclick="goPage('message_locataire.php')">
+
 <i class="fas fa-envelope"></i>
+
 <br>Messages
+
 </button>
 
-<button class="quick-btn" onclick="goPage('notification_locataire.html')">
+<button class="quick-btn" onclick="goPage('notification_locataire.php')">
+
 <i class="fas fa-bell"></i>
+
 <br>Notifications
+
 </button>
 
-<button class="quick-btn" onclick="goPage('guide.html')">
+<button class="quick-btn" onclick="goPage('guide.php')">
+
 <i class="fas fa-book"></i>
+
 <br>Guide
+
 </button>
 
-<button class="quick-btn" onclick="goPage('calendrier_locataire.html')">
+<button class="quick-btn" onclick="goPage('calendrier_locataire.php')">
+
 <i class="fas fa-calendar"></i>
+
 <br>Calendrier
+
 </button>
 
 </div>
 
 <footer>
+
 © 2026 RentMaster - Tous droits réservés
+
 </footer>
 
 </div>
@@ -394,60 +453,33 @@ Suivez vos paiements et vos contrats facilement.
 
 function toggleSidebar(){
 
-sidebar.classList.toggle("show");
-
+    document.getElementById("sidebar").classList.toggle("show");
 }
-
-/* SECURITE */
-
-if(localStorage.getItem("connecte") !== "true"){
-
-window.location.href = "login.html";
-
-}
-
-/* USER */
-
-let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
-
-let userId = localStorage.getItem("userId");
-
-let locataire = locataires.find(l => l.id == userId);
-
-/* WELCOME */
-
-welcomeText.innerText = locataire ?
-
-`Bonjour ${locataire.nom} 👋`
-
-:
-
-"Bonjour 👋";
 
 /* PAYMENT BUTTON */
 
 function payer(){
 
-let btn = document.getElementById("payBtn");
+    let btn = document.getElementById("payBtn");
 
-btn.innerHTML = "✔ Redirection...";
+    btn.innerHTML = "✔ Redirection...";
 
-btn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
+    btn.style.background =
+    "linear-gradient(135deg,#16a34a,#22c55e)";
 
-setTimeout(()=>{
+    setTimeout(()=>{
 
-window.location.href = "paiement_locataire.html";
+        window.location.href =
+        "paiement_locataire.php";
 
-},1000);
-
+    },1000);
 }
 
 /* QUICK ACCESS */
 
 function goPage(page){
 
-window.location.href = page;
-
+    window.location.href = page;
 }
 
 </script>

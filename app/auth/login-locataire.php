@@ -1,3 +1,72 @@
+<?php
+session_start();
+
+require_once('../config/database.php');
+
+$message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $matricule = trim($_POST['matricule'] ?? '');
+    $mot_de_passe = trim($_POST['mot_de_passe'] ?? '');
+
+    if (!empty($matricule) && !empty($mot_de_passe)) {
+
+        try {
+
+            $database = new Database();
+            $conn = $database->connect();
+
+            $sql = "SELECT * FROM locataires WHERE matricule = :matricule LIMIT 1";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(':matricule', $matricule);
+            $stmt->execute();
+
+            $locataire = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($locataire) {
+
+                if ($mot_de_passe === $locataire['mot_de_passe']) {
+
+                    $_SESSION['id'] = $locataire['id_locataire'];
+                    $_SESSION['id_bailleur'] = $locataire['id_bailleur'];
+                    $_SESSION['matricule'] = $locataire['matricule'];
+                    $_SESSION['nom'] = $locataire['nom'];
+                    $_SESSION['postnom'] = $locataire['postnom'];
+                    $_SESSION['prenom'] = $locataire['prenom'];
+                    $_SESSION['role'] = 'locataire';
+
+                    header('Location: ../views/locataire/dashboard_locataire.php');
+                      exit();
+
+                } else {
+
+                    $message = "Mot de passe incorrect.";
+
+                }
+
+            } else {
+
+                $message = "Matricule introuvable.";
+
+            }
+
+        } catch (PDOException $e) {
+
+            $message = "Erreur : " . $e->getMessage();
+
+        }
+
+    } else {
+
+        $message = "Veuillez remplir tous les champs.";
+
+    }
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -24,7 +93,7 @@ body {
     min-height: 100vh;
 
     /* 🔥 IMAGE DE FOND */
-    background-image: url("../../../public/assets/images/fond.png");
+    background-image: url("../../public/assets/images/fond.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -172,27 +241,47 @@ footer {
 <main class="container">
 
     <!-- Logo AGRANDI -->
-    <img src="../../../public/assets/images/logo.png" alt="Logo RentMaster" class="logo">
+    <img src="../../public/assets/images/logo.png" alt="Logo RentMaster" class="logo">
 
 
     <h2 class="page-title">Connexion Locataire</h2>
 
-    <form class="form" onsubmit="connexion(event)">
+    <?php if(!empty($message)) : ?>
+<div style="
+background:#fee2e2;
+color:#b91c1c;
+padding:10px;
+border-radius:8px;
+margin-bottom:10px;
+text-align:center;
+">
+    <?= htmlspecialchars($message) ?>
+</div>
+<?php endif; ?>
+    <form class="form" method="POST">
 
-        <div class="form-group">
-            <input type="text" id="matricule" placeholder="Matricule" required>
-        </div>
+       <div class="form-group">
+    <input type="text"
+           name="matricule"
+           id="matricule"
+           placeholder="Matricule"
+           required>
+</div>
 
-        <div class="form-group">
-            <input type="password" id="password" placeholder="Mot de passe" required>
-        </div>
+<div class="form-group">
+    <input type="password"
+           name="mot_de_passe"
+           id="mot_de_passe"
+           placeholder="Mot de passe"
+           required>
+</div>
 
         <button type="submit">Se connecter</button>
 
     </form>
 
     <div class="links">
-        <p><a href="../../../index.html">← Retour à l’accueil</a></p>
+        <a href="../controllers/logout.php">← Retour à l’accueil</a></p>
     </div>
 
     <footer>
@@ -201,25 +290,7 @@ footer {
 
 </main>
 
-<script>
-function connexion(event) {
-    event.preventDefault();
 
-    let matricule = document.getElementById("matricule").value;
-    let password = document.getElementById("password").value;
-    let locataires = JSON.parse(localStorage.getItem("locataires")) || [];
-
-    let utilisateur = locataires.find(l => l.matricule === matricule && l.password === password);
-
-    if (utilisateur) {
-        localStorage.setItem("connecte", "true");
-        localStorage.setItem("userId", utilisateur.id);
-        window.location.href = "dashboard_locataire.html";
-    } else {
-        alert("Matricule ou mot de passe incorrect !");
-    }
-}
-</script>
 
 </body>
 </html>

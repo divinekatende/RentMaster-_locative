@@ -1,3 +1,83 @@
+<?php
+session_start();
+require_once('../config/database.php');
+
+$message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $email = trim($_POST['email'] ?? '');
+    $mot_de_passe = trim($_POST['mot_de_passe'] ?? '');
+
+    if (!empty($email) && !empty($mot_de_passe)) {
+
+        try {
+            $database = new Database();
+            $conn = $database->connect();
+
+            /*
+            =========================
+            1. VERIFIER ADMIN
+            =========================
+            */
+            $sqlAdmin = "SELECT * FROM administrateurs WHERE email = :email LIMIT 1";
+            $stmt = $conn->prepare($sqlAdmin);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($admin && $mot_de_passe === $admin['mot_de_passe']) {
+
+                $_SESSION['id'] = $admin['id_admin'];
+                $_SESSION['nom'] = $admin['nom'];
+                $_SESSION['email'] = $admin['email'];
+                $_SESSION['role'] = 'admin';
+                header("Location: ../views/administrateur/dashboard.php");
+                   exit();
+                
+            }
+
+            /*
+            =========================
+            2. VERIFIER BAILLEUR
+            =========================
+            */
+            $sqlBailleur = "SELECT * FROM bailleurs WHERE email = :email LIMIT 1";
+            $stmt = $conn->prepare($sqlBailleur);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            $bailleur = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($bailleur && $mot_de_passe === $bailleur['mot_de_passe']) {
+
+                $_SESSION['id'] = $bailleur['id_bailleur'];
+                $_SESSION['nom'] = $bailleur['nom'];
+                $_SESSION['prenom'] = $bailleur['prenom'];
+                $_SESSION['email'] = $bailleur['email'];
+                $_SESSION['role'] = 'bailleur';
+
+                header("Location: ../views/bailleur/dashboard.php");
+                    exit();
+            }
+
+            /*
+            =========================
+            3. ERREUR
+            =========================
+            */
+            $message = "Email ou mot de passe incorrect.";
+
+        } catch (PDOException $e) {
+            $message = "Erreur : " . $e->getMessage();
+        }
+
+    } else {
+        $message = "Veuillez remplir tous les champs.";
+    }
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -19,7 +99,7 @@
 body {
     min-height: 100vh;
 
-    background-image: url("../../../public/assets/images/fond.png");
+    background-image: url("../../public/assets/images/fond.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -185,19 +265,31 @@ footer {
 
 <main class="container">
 
-    <img src="../../../public/assets/images/logo.png" alt="Logo RentMaster" class="logo">
+    <img src="../../public/assets/images/logo.png" alt="Logo RentMaster" class="logo">
 
     <h2 class="page-title">Connexion Bailleur</h2>
 
-    <form class="form" onsubmit="connexion(event)">
+    <?php if(!empty($message)) : ?>
+<div style="
+background:#fee2e2;
+color:#b91c1c;
+padding:10px;
+border-radius:8px;
+margin-bottom:10px;
+text-align:center;
+">
+    <?= htmlspecialchars($message) ?>
+</div>
+<?php endif; ?>
+    <form class="form" method="POST">
         <div class="form-group">
             <label>Email</label>
-            <input type="email" id="email" required>
+            <input type="email" name="email" required>
         </div>
 
         <div class="form-group">
             <label>Mot de passe</label>
-            <input type="password" id="password" required>
+            <input type="password" name="mot_de_passe" required>
         </div>
 
         <button type="submit">Se connecter</button>
@@ -205,7 +297,7 @@ footer {
     </form>
 
     <div class="links">
-        <a href="../../../index.html">← Retour à l’accueil</a>
+    <a href="../controllers/logout.php"> ← Retour à l’accueil</a>
     </div>
 
     <footer>
@@ -214,34 +306,6 @@ footer {
 
 </main>
 
-<script>
-function connexion(event){
-    event.preventDefault();
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const msg = document.getElementById("messageErreur");
-
-    if(email === "" || password === ""){
-        msg.textContent = "Veuillez remplir tous les champs";
-        msg.className = "error";
-        return;
-    }
-
-    if(email === "divinekatende23@gmail.com" && password === "1213"){
-        window.location.href = "dashboard.html";
-        return;
-    }
-
-    if(email === "divinekatende23@gmail.com" && password === "1990"){
-        window.location.href = "../../../app/views/administrateur/biometric.html";
-        return;
-    }
-
-    msg.textContent = "Email ou mot de passe incorrect";
-    msg.className = "error";
-}
-</script>
 
 </body>
 </html>

@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn = $database->connect();
 
             $sql = "SELECT * FROM locataires WHERE matricule = :matricule LIMIT 1";
-
             $stmt = $conn->prepare($sql);
             $stmt->bindParam(':matricule', $matricule);
             $stmt->execute();
@@ -27,8 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($locataire) {
 
+                // ⚠️ LOGIQUE MOT DE PASSE (actuelle simple)
                 if ($mot_de_passe === $locataire['mot_de_passe']) {
 
+                    // =========================
+                    // SESSION USER
+                    // =========================
                     $_SESSION['id'] = $locataire['id_locataire'];
                     $_SESSION['id_bailleur'] = $locataire['id_bailleur'];
                     $_SESSION['matricule'] = $locataire['matricule'];
@@ -37,35 +40,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['prenom'] = $locataire['prenom'];
                     $_SESSION['role'] = 'locataire';
 
-                    header('Location: ../views/locataire/dashboard_locataire.php');
-                      exit();
+                    $_SESSION['first_login'] = $locataire['first_login'];
+
+                    // =========================
+                    // REDIRECTION LOGIQUE
+                    // =========================
+                    if ($locataire['first_login'] == 1) {
+
+                        header('Location: ../views/locataire/profil_locataire.php');
+                        exit();
+
+                    } else {
+
+                        header('Location: ../views/locataire/dashboard_locataire.php');
+                        exit();
+                    }
 
                 } else {
-
                     $message = "Mot de passe incorrect.";
-
                 }
 
             } else {
-
                 $message = "Matricule introuvable.";
-
             }
 
         } catch (PDOException $e) {
-
-            $message = "Erreur : " . $e->getMessage();
-
+            $message = "Erreur serveur.";
         }
 
     } else {
-
         $message = "Veuillez remplir tous les champs.";
-
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -75,80 +82,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>RentMaster | Connexion Locataire</title>
 
 <style>
-
-/* =========================
-   RESET
-========================= */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* =========================
-   BODY (IMAGE DE FOND AJOUTÉE)
-========================= */
 body {
     min-height: 100vh;
-
-    /* 🔥 IMAGE DE FOND */
     background-image: url("../../public/assets/images/fond.png");
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     padding: 20px;
 }
 
-/* =========================
-   CONTAINER
-========================= */
 .container {
-    background: #ffffff;
+    background: #fff;
     width: 100%;
     max-width: 420px;
-
     padding: 35px 30px;
     border-radius: 16px;
-
     text-align: center;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
 }
 
-/* =========================
-   LOGO (AGRANDI)
-========================= */
 .logo {
-    width: 180px;   /* 🔥 AGRANDI */
-    height: auto;
-    margin: 0 auto;
+    width: 180px;
+    margin: auto;
 }
 
-/* =========================
-   TITRES
-========================= */
-.app-name {
-    font-size: 26px;
+h2 {
     color: #2563eb;
+    margin-bottom: 15px;
 }
 
-.page-title {
-    font-size: 18px;
-    color: #333;
-}
-
-/* =========================
-   FORM
-========================= */
 .form {
     display: flex;
     flex-direction: column;
@@ -156,141 +127,67 @@ body {
     text-align: left;
 }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group input {
+input {
     width: 100%;
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
-    font-size: 14px;
 }
 
-.form-group input:focus {
+input:focus {
     border-color: #2563eb;
     outline: none;
 }
 
-/* =========================
-   BOUTON
-========================= */
 button {
-    width: 100%;
     padding: 13px;
     border: none;
     border-radius: 10px;
-    font-size: 16px;
+    background: #2563eb;
+    color: white;
     font-weight: 600;
     cursor: pointer;
-    background-color: #2563eb;
-    color: white;
-    transition: 0.3s;
 }
 
 button:hover {
-    background-color: #1e40af;
-    transform: translateY(-2px);
+    background: #1e40af;
 }
 
-/* =========================
-   LIENS
-========================= */
-.links {
-    text-align: center;
-    font-size: 14px;
+.error {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
-
-/* =========================
-   FOOTER
-========================= */
-footer {
-    font-size: 12px;
-    color: #888;
-    text-align: center;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 480px) {
-    .container {
-        padding: 25px 20px;
-    }
-
-    .logo {
-        width: 140px; /* responsive logo */
-    }
-
-    .app-name {
-        font-size: 22px;
-    }
-
-    .page-title {
-        font-size: 16px;
-    }
-}
-
 </style>
 </head>
 
 <body>
 
-<main class="container">
+<div class="container">
 
-    <!-- Logo AGRANDI -->
-    <img src="../../public/assets/images/logo.png" alt="Logo RentMaster" class="logo">
+    <img src="../../public/assets/images/logo.png" class="logo">
 
-
-    <h2 class="page-title">Connexion Locataire</h2>
+    <h2>Connexion Locataire</h2>
 
     <?php if(!empty($message)) : ?>
-<div style="
-background:#fee2e2;
-color:#b91c1c;
-padding:10px;
-border-radius:8px;
-margin-bottom:10px;
-text-align:center;
-">
-    <?= htmlspecialchars($message) ?>
-</div>
-<?php endif; ?>
+        <div class="error">
+            <?= htmlspecialchars($message) ?>
+        </div>
+    <?php endif; ?>
+
     <form class="form" method="POST">
 
-       <div class="form-group">
-    <input type="text"
-           name="matricule"
-           id="matricule"
-           placeholder="Matricule"
-           required>
-</div>
+        <input type="text" name="matricule" placeholder="Matricule" required>
 
-<div class="form-group">
-    <input type="password"
-           name="mot_de_passe"
-           id="mot_de_passe"
-           placeholder="Mot de passe"
-           required>
-</div>
+        <input type="password" name="mot_de_passe" placeholder="Mot de passe" required>
 
         <button type="submit">Se connecter</button>
 
     </form>
 
-    <div class="links">
-        <a href="../controllers/logout.php">← Retour à l’accueil</a></p>
-    </div>
-
-    <footer>
-        <p>&copy; 2026 RentMaster</p>
-    </footer>
-
-</main>
-
-
+</div>
 
 </body>
 </html>

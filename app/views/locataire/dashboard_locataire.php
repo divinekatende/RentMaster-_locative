@@ -1,488 +1,384 @@
 <?php
+session_start();
 
-require_once __DIR__ . '/../../auth/session.php';
+// Sécurité : locataire connecté obligatoire
+if (!isset($_SESSION['id_locataire'])) {
+    header('Location: ../../controllers/login_locataire.php');
+    exit;
+}
 
-verifierConnexion();
-verifierRole(['locataire']);
+// Bloquer si mot de passe non encore changé
+if (isset($_SESSION['force_change_mdp']) && $_SESSION['force_change_mdp'] === true) {
+    header('Location: profil_locataire.php?first_login=1');
+    exit;
+}
 
+$nom    = $_SESSION['nom']    ?? '';
+$prenom = $_SESSION['prenom'] ?? '';
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard - RentMaster</title>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Segoe UI',sans-serif;
+:root {
+    --blue: #2563eb;
+    --blue2: #3b82f6;
+    --dark: #0f172a;
+    --gray: #64748b;
+    --white: #fff;
 }
 
-:root{
-    --blue:#2563eb;
-    --blue2:#3b82f6;
-    --light:#f4f8ff;
-    --white:#fff;
-    --dark:#0f172a;
-    --gray:#64748b;
-}
-
-body{
-    background:linear-gradient(135deg,#eef5ff,#ffffff);
-    min-height:100vh;
-    display:flex;
+body {
+    background: linear-gradient(135deg, #eef5ff, #ffffff);
+    min-height: 100vh;
+    display: flex;
 }
 
 /* SIDEBAR */
-
-aside{
-    width:240px;
-    background:rgba(255,255,255,.9);
-    backdrop-filter:blur(10px);
-    border-right:1px solid #dbeafe;
-    padding:20px;
-    position:fixed;
-    height:100%;
-    transition:.3s;
+aside {
+    width: 240px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid #dbeafe;
+    padding: 20px;
+    position: fixed;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: 0.3s;
+    z-index: 999;
 }
 
-.logo{
-    text-align:center;
-    margin-bottom:30px;
+.logo { text-align: center; margin-bottom: 30px; }
+.logo img {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    border: 4px solid #dbeafe;
+    object-fit: cover;
+}
+.logo h2 { color: var(--blue); margin-top: 10px; font-size: 1.2em; }
+
+aside nav { flex: 1; }
+
+aside a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    margin-bottom: 6px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--dark);
+    font-weight: 600;
+    font-size: 0.95em;
+    transition: 0.3s;
+}
+aside a:hover, aside a.active {
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    color: white;
+    transform: translateX(5px);
+}
+aside a i { width: 18px; text-align: center; }
+
+.sidebar-footer {
+    border-top: 1px solid #dbeafe;
+    padding-top: 14px;
+}
+.sidebar-footer a {
+    color: #e74c3c !important;
+    background: #fff5f5;
+}
+.sidebar-footer a:hover {
+    background: #e74c3c !important;
+    color: white !important;
+    transform: translateX(5px);
 }
 
-.logo img{
-    width:100px;
-    border-radius:50%;
-    border:4px solid #dbeafe;
+/* MAIN */
+.content {
+    margin-left: 240px;
+    width: 100%;
+    padding: 30px;
 }
 
-.logo h2{
-    margin-top:10px;
-    color:var(--blue);
+/* BANNER PREMIERE CONNEXION */
+.banner-first-login {
+    background: linear-gradient(135deg, #fff7ed, #fffbeb);
+    border-left: 5px solid #f59e0b;
+    padding: 18px 22px;
+    border-radius: 14px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: 0 4px 15px rgba(245,158,11,0.15);
 }
-
-aside a{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:14px;
-    margin-bottom:10px;
-    border-radius:14px;
-    text-decoration:none;
-    color:var(--dark);
-    font-weight:600;
-    transition:.3s;
+.banner-first-login .txt h3 { color: #92400e; font-size: 1.05em; margin-bottom: 4px; }
+.banner-first-login .txt p  { color: #b45309; font-size: 0.88em; }
+.banner-first-login a {
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    color: white;
+    padding: 10px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.88em;
+    white-space: nowrap;
+    transition: 0.3s;
 }
+.banner-first-login a:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
 
-aside a:hover,
-.active{
-    background:linear-gradient(135deg,var(--blue),var(--blue2));
-    color:white;
-    transform:translateX(5px);
+/* TOP BAR */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
-
-/* CONTENT */
-
-.content{
-    margin-left:240px;
-    width:100%;
-    padding:30px;
-}
-
-/* HEADER */
-
-.top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:25px;
-}
-
-.top h1{
-    color:var(--blue);
-    font-size:32px;
-}
-
-.menu-btn{
-    display:none;
-    width:45px;
-    height:45px;
-    border:none;
-    border-radius:12px;
-    background:var(--blue);
-    color:white;
-    font-size:18px;
-}
+.topbar h1 { color: var(--blue); font-size: 1.8em; }
 
 /* WELCOME */
+.welcome {
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    color: white;
+    padding: 24px 28px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 25px rgba(37,99,235,0.2);
+}
+.welcome h2 { font-size: 1.4em; margin-bottom: 4px; }
+.welcome p  { opacity: 0.85; font-size: 0.9em; }
 
-.welcome{
-    background:linear-gradient(135deg,var(--blue),var(--blue2));
-    color:white;
-    padding:25px;
-    border-radius:24px;
-    margin-bottom:25px;
-    box-shadow:0 10px 25px rgba(37,99,235,.2);
+/* STATS CARDS */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+.card {
+    background: white;
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: 0.3s;
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+.card .icon {
+    width: 50px; height: 50px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3em;
+    color: white;
+    flex-shrink: 0;
+}
+.icon-blue   { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.icon-orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.icon-red    { background: linear-gradient(135deg, #ef4444, #f87171); }
+.icon-green  { background: linear-gradient(135deg, #22c55e, #4ade80); }
+.card .val   { font-size: 1.3em; font-weight: 700; color: var(--dark); }
+.card .lbl   { font-size: 0.78em; color: var(--gray); }
+
+/* QUICK ACTIONS */
+.section-title { font-size: 1.05em; font-weight: 700; color: var(--dark); margin-bottom: 14px; }
+.quick {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px;
+    margin-bottom: 30px;
+}
+.quick-btn {
+    background: white;
+    border: 1.5px solid #dbeafe;
+    padding: 22px 16px;
+    border-radius: 18px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--blue);
+    font-weight: 700;
+    font-size: 0.88em;
+    transition: 0.3s;
+    text-decoration: none;
+    display: block;
+}
+.quick-btn i { display: block; font-size: 1.6em; margin-bottom: 8px; }
+.quick-btn:hover {
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    color: white;
+    border-color: transparent;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(37,99,235,0.25);
 }
 
-.welcome h2{
-    margin-bottom:10px;
+/* BTN PAYER */
+.btn-payer {
+    background: linear-gradient(135deg, #22c55e, #4ade80);
+    color: white;
+    border: none;
+    padding: 16px 28px;
+    border-radius: 14px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+.btn-payer:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(34,197,94,0.35);
 }
 
-.welcome p{
-    opacity:.9;
+/* MENU MOBILE */
+.menu-btn {
+    display: none;
+    width: 44px; height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: var(--blue);
+    color: white;
+    font-size: 1.1em;
+    cursor: pointer;
 }
 
-/* CARDS */
-
-.cards{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:20px;
+footer {
+    text-align: center;
+    padding: 16px;
+    color: var(--gray);
+    font-size: 0.82em;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 10px;
 }
 
-.card{
-    background:rgba(255,255,255,.95);
-    padding:25px;
-    border-radius:22px;
-    box-shadow:0 10px 25px rgba(37,99,235,.08);
-    transition:.3s;
+@media (max-width: 900px) {
+    aside { left: -260px; }
+    aside.show { left: 0; }
+    .content { margin-left: 0; padding: 70px 14px 20px; }
+    .menu-btn { display: flex; align-items: center; justify-content: center; }
 }
-
-.card:hover{
-    transform:translateY(-5px);
-}
-
-.card i{
-    width:55px;
-    height:55px;
-    background:#dbeafe;
-    color:var(--blue);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:16px;
-    font-size:22px;
-    margin-bottom:15px;
-}
-
-.card h3{
-    color:var(--gray);
-    margin-bottom:10px;
-}
-
-.card p{
-    color:var(--dark);
-    font-size:24px;
-    font-weight:700;
-}
-
-/* BUTTON */
-
-.btn{
-    margin-top:30px;
-    border:none;
-    background:linear-gradient(135deg,var(--blue),var(--blue2));
-    color:white;
-    padding:16px 24px;
-    border-radius:16px;
-    font-size:16px;
-    font-weight:700;
-    cursor:pointer;
-    transition:.3s;
-}
-
-.btn:hover{
-    transform:translateY(-3px);
-    box-shadow:0 8px 20px rgba(37,99,235,.25);
-}
-
-/* QUICK */
-
-.quick{
-    margin-top:35px;
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-    gap:18px;
-}
-
-.quick-btn{
-    background:white;
-    border:none;
-    padding:25px;
-    border-radius:20px;
-    box-shadow:0 8px 20px rgba(37,99,235,.08);
-    cursor:pointer;
-    transition:.3s;
-    color:var(--blue);
-    font-weight:700;
-}
-
-.quick-btn i{
-    font-size:28px;
-    margin-bottom:10px;
-}
-
-.quick-btn:hover{
-    background:linear-gradient(135deg,var(--blue),var(--blue2));
-    color:white;
-    transform:translateY(-5px);
-}
-
-/* FOOTER */
-
-footer{
-    margin-top:40px;
-    text-align:center;
-    color:var(--gray);
-}
-
-/* RESPONSIVE */
-
-@media(max-width:900px){
-
-    aside{
-        left:-100%;
-        z-index:999;
-    }
-
-    aside.show{
-        left:0;
-    }
-
-    .content{
-        margin-left:0;
-        padding:20px;
-    }
-
-    .menu-btn{
-        display:block;
-    }
-
-    .top h1{
-        font-size:24px;
-    }
-}
-
 </style>
 </head>
-
 <body>
 
 <!-- SIDEBAR -->
-
 <aside id="sidebar">
-
-<div class="logo">
-
-<img src="../../../public/assets/images/logo.png">
-
-<h2>RentMaster</h2>
-
-</div>
-
-<a class="active" href="dashboard.php">
-<i class="fas fa-home"></i>
-Dashboard
-</a>
-
-<a href="contrat_locataire.php">
-<i class="fas fa-file-contract"></i>
-Contrat
-</a>
-
-<a href="paiement_locataire.php">
-<i class="fas fa-credit-card"></i>
-Paiement
-</a>
-
-<a href="historique.php">
-<i class="fas fa-history"></i>
-Historique
-</a>
-
-<a href="profil_locataire.php">
-<i class="fas fa-user"></i>
-Profil
-</a>
-
-<a href="../../controllers/logout.php">
-    <i class="fas fa-sign-out-alt"></i>
-    Déconnexion
-</a>
-
+    <div class="logo">
+        <img src="../../../public/assets/images/logo.png" alt="logo">
+        <h2>RentMaster</h2>
+    </div>
+    <nav>
+        <a href="dashboard_locataire.php" class="active"><i class="fa fa-home"></i> Dashboard</a>
+        <a href="contrat_locataire.php"><i class="fa fa-file-contract"></i> Contrat</a>
+        <a href="paiement_locataire.php"><i class="fa fa-credit-card"></i> Paiement</a>
+        <a href="historique.php"><i class="fa fa-history"></i> Historique</a>
+        <a href="profil_locataire.php"><i class="fa fa-user"></i> Profil</a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="../../controllers/logout.php"><i class="fa fa-sign-out-alt"></i> Déconnexion</a>
+    </div>
 </aside>
 
-<!-- CONTENT -->
-
+<!-- MAIN -->
 <div class="content">
 
-<div class="top">
+    <!-- BANNIÈRE PREMIÈRE CONNEXION -->
+    <?php if (isset($_SESSION['first_login']) && $_SESSION['first_login'] == 0): ?>
+    <div class="banner-first-login">
+        <div class="txt">
+            <h3><i class="fa fa-triangle-exclamation"></i> Première connexion détectée</h3>
+            <p>Votre mot de passe par défaut doit être changé pour sécuriser votre compte.</p>
+        </div>
+        <a href="profil_locataire.php?first_login=1">
+            <i class="fa fa-lock"></i> Changer maintenant
+        </a>
+    </div>
+    <?php endif; ?>
 
-<h1>Dashboard</h1>
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <h1><i class="fa fa-home"></i> Dashboard</h1>
+        <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('show')">
+            <i class="fa fa-bars"></i>
+        </button>
+    </div>
 
-<button class="menu-btn" onclick="toggleSidebar()">
-<i class="fas fa-bars"></i>
-</button>
+    <!-- WELCOME -->
+    <div class="welcome">
+        <h2>👋 Bienvenue, <?= htmlspecialchars($prenom . ' ' . $nom) ?> !</h2>
+        <p>Voici un résumé de votre espace locataire RentMaster.</p>
+    </div>
 
-</div>
+    <!-- CARDS -->
+    <div class="cards">
+        <div class="card">
+            <div class="icon icon-blue"><i class="fa fa-money-bill-wave"></i></div>
+            <div>
+                <div class="val">500 $</div>
+                <div class="lbl">Loyer mensuel</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="icon icon-orange"><i class="fa fa-calendar-alt"></i></div>
+            <div>
+                <div class="val">05 Juil.</div>
+                <div class="lbl">Prochaine échéance</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="icon icon-red"><i class="fa fa-circle-xmark"></i></div>
+            <div>
+                <div class="val" style="color:#ef4444;">Non payé</div>
+                <div class="lbl">Statut paiement</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="icon icon-green"><i class="fa fa-file-contract"></i></div>
+            <div>
+                <div class="val">Actif</div>
+                <div class="lbl">Contrat</div>
+            </div>
+        </div>
+    </div>
 
-<!-- WELCOME -->
+    <!-- PAYER -->
+    <button class="btn-payer" id="payBtn" onclick="payer()">
+        <i class="fa fa-credit-card"></i> Payer maintenant
+    </button>
 
-<div class="welcome">
+    <!-- ACTIONS RAPIDES -->
+    <p class="section-title">Actions rapides</p>
+    <div class="quick">
+        <a href="message_locataire.php"      class="quick-btn"><i class="fa fa-envelope"></i> Messages</a>
+        <a href="notification_locataire.php" class="quick-btn"><i class="fa fa-bell"></i> Notifications</a>
+        <a href="guide.php"                  class="quick-btn"><i class="fa fa-book"></i> Guide</a>
+        <a href="calendrier_locataire.php"   class="quick-btn"><i class="fa fa-calendar"></i> Calendrier</a>
+    </div>
 
-<h2>
-
-<h2>
-Bienvenue
-<?= $_SESSION['prenom'] . ' ' . $_SESSION['nom']; ?>
-</h2>
-
-</h2>
-
-<p>
-Sur votre espace locataire RentMaster.
-Suivez vos paiements et vos contrats facilement.
-</p>
-
-</div>
-
-<!-- CARDS -->
-
-<div class="cards">
-
-<div class="card">
-
-<i class="fas fa-money-bill-wave"></i>
-
-<h3>Loyer à payer</h3>
-
-<p>500$</p>
-
-</div>
-
-<div class="card">
-
-<i class="fas fa-calendar-alt"></i>
-
-<h3>Échéance</h3>
-
-<p>05 Avril</p>
-
-</div>
-
-<div class="card">
-
-<i class="fas fa-circle-xmark"></i>
-
-<h3>Statut</h3>
-
-<p style="color:red;">Non payé</p>
-
-</div>
-
-</div>
-
-<!-- BUTTON -->
-
-<button class="btn" onclick="payer()" id="payBtn">
-
-<i class="fas fa-credit-card"></i>
-
-Payer maintenant
-
-</button>
-
-<!-- QUICK ACCESS -->
-
-<div class="quick">
-
-<button class="quick-btn" onclick="goPage('message_locataire.php')">
-
-<i class="fas fa-envelope"></i>
-
-<br>Messages
-
-</button>
-
-<button class="quick-btn" onclick="goPage('notification_locataire.php')">
-
-<i class="fas fa-bell"></i>
-
-<br>Notifications
-
-</button>
-
-<button class="quick-btn" onclick="goPage('guide.php')">
-
-<i class="fas fa-book"></i>
-
-<br>Guide
-
-</button>
-
-<button class="quick-btn" onclick="goPage('calendrier_locataire.php')">
-
-<i class="fas fa-calendar"></i>
-
-<br>Calendrier
-
-</button>
-
-</div>
-
-<footer>
-
-© 2026 RentMaster - Tous droits réservés
-
-</footer>
-
+    <footer>&copy; 2026 RentMaster — Tous droits réservés</footer>
 </div>
 
 <script>
-
-/* MENU */
-
-function toggleSidebar(){
-
-    document.getElementById("sidebar").classList.toggle("show");
+function payer() {
+    const btn = document.getElementById('payBtn');
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Redirection...';
+    btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+    setTimeout(() => { window.location.href = 'paiement_locataire.php'; }, 1000);
 }
-
-/* PAYMENT BUTTON */
-
-function payer(){
-
-    let btn = document.getElementById("payBtn");
-
-    btn.innerHTML = "✔ Redirection...";
-
-    btn.style.background =
-    "linear-gradient(135deg,#16a34a,#22c55e)";
-
-    setTimeout(()=>{
-
-        window.location.href =
-        "paiement_locataire.php";
-
-    },1000);
-}
-
-/* QUICK ACCESS */
-
-function goPage(page){
-
-    window.location.href = page;
-}
-
 </script>
-
 </body>
 </html>

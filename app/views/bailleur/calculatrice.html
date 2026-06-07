@@ -5,177 +5,319 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculatrice - RentMaster</title>
 
-<!-- FONTS & ICONES -->
- <link rel="stylesheet" href="theme.css">
-<script src="theme.js" defer></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-/* === BASE === */
+/* === VARIABLES & THÈME RENTMASTER === */
+:root {
+    --bg-app: #f8fafc;
+    --surface: #ffffff;
+    --primary: #1e40af;
+    --primary-light: #3b82f6;
+    --primary-soft: #eff6ff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+    
+    --danger: #ef4444;
+    --danger-soft: #fef2f2;
+}
+
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Inter', sans-serif;
+}
+
 body {
-    font-family:'Inter',sans-serif;
-    background:#f4f7fb;
-    margin:0;
-    padding:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
+    background: var(--bg-app);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
 }
 
-.container{
-  max-width:360px;
-  width:100%;
-  margin:40px auto;
-  padding:20px;
-  background:#fff;
-  border-radius:14px;
-  box-shadow:0 8px 25px rgba(0,0,0,0.08);
+/* CONTAINER PRINCIPAL */
+.container {
+    max-width: 380px;
+    width: 100%;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    padding: 24px;
 }
 
-/* TOPBAR */
-.top-actions{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
+/* BARRE SUPÉRIEURE */
+.top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
 }
-.top-actions h1{
-  color:#2563eb;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-size:20px;
-}
-.btn{padding:8px 12px;border:none;border-radius:10px;cursor:pointer;font-weight:600;transition:0.3s;}
-.btn-primary{background:#2563eb;color:#fff;}
-.btn-ghost{background:#fff;border:1px solid #ddd;color:#2563eb;}
 
-/* CALCULATRICE */
+.top-actions h1 {
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.02em;
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-ghost {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+    background: var(--bg-app);
+    color: var(--text-main);
+}
+
+/* ZONE ÉCRAN DE LA CALCULATRICE */
 .calculator {
-    display:flex;
-    flex-direction:column;
-    gap:10px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.display {
-    width:100%;
-    height:50px;
-    border-radius:10px;
-    border:2px solid #3498db;
-    text-align:right;
-    font-size:20px;
-    padding:10px;
+.screen-container {
+    width: 100%;
+    background: #0f172a; /* Écran sombre moderne style pro */
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    min-height: 90px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Petit écran pour l'historique de la chaîne de calcul */
+.history-display {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 20px;
+    word-wrap: break-word;
+    word-break: break-all;
+    text-align: right;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+/* Écran principal du résultat */
+.main-display {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    text-align: right;
+    font-size: 28px;
+    font-weight: 600;
+    outline: none;
+    padding: 0;
+}
+
+/* GRILLE DES TOUCHES */
 .buttons {
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
 }
 
 button.calc-btn {
-    height:50px;
-    border-radius:10px;
-    border:2px solid #3498db;
-    background:#ecf5ff;
-    font-size:18px;
-    cursor:pointer;
-    transition:0.2s;
+    height: 56px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+    color: var(--text-main);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Boutons numériques standard */
 button.calc-btn:hover {
-    background:#3498db;
-    color:#fff;
+    background: var(--bg-app);
+    border-color: #cbd5e1;
 }
 
-/* SPÉCIAUX */
-.equal { grid-column: span 2; background:#3498db; color:white; }
-.clear { background:#ffecec; border-color:#e74c3c; }
-.clear:hover { background:#e74c3c; color:white; }
+button.calc-btn:active {
+    transform: scale(0.96);
+}
+
+/* Boutons d'opérations */
+.operator {
+    background: var(--primary-soft) !important;
+    color: var(--primary) !important;
+    border-color: #bfdbfe !important;
+}
+
+.operator:hover {
+    background: #dbeafe !important;
+}
+
+/* Bouton égal principal */
+.equal {
+    grid-column: span 2;
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+}
+
+.equal:hover {
+    background: var(--primary-light) !important;
+    border-color: var(--primary-light) !important;
+}
+
+/* Bouton de nettoyage */
+.clear {
+    background: var(--danger-soft) !important;
+    color: var(--danger) !important;
+    border-color: #fca5a5 !important;
+}
+
+.clear:hover {
+    background: var(--danger) !important;
+    color: white !important;
+    border-color: var(--danger) !important;
+}
 
 /* === RESPONSIVE MOBILE === */
-@media(max-width:400px){
-  .container{
-    margin:20px 10px;
-    padding:15px;
-  }
-  .top-actions{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:10px;
-  }
-  .top-actions h1{font-size:18px;}
-  .btn{padding:6px 10px;font-size:0.9em;}
-  .display{height:45px;font-size:18px;padding:8px;}
-  button.calc-btn{height:45px;font-size:16px;}
-  .buttons{gap:8px;}
-  .equal{grid-column:span 2;}
+@media(max-width: 400px) {
+    .container {
+        padding: 16px;
+    }
+    .top-actions h1 { font-size: 18px; }
+    button.calc-btn { height: 50px; font-size: 16px; }
+    .main-display { font-size: 24px; }
 }
 </style>
 </head>
-
 <body>
 
 <div class="container">
 
-  <!-- TOPBAR -->
-  <div class="top-actions">
-    <h1><i class="fas fa-calculator"></i> Calculatrice</h1>
-    <button class="btn btn-primary" onclick="window.location='dashboard.html'">
-      <i class="fa fa-arrow-left"></i> Retour
-    </button>
-  </div>
-
-  <!-- CALCULATRICE -->
-  <div class="calculator">
-    <input type="text" id="display" class="display" disabled>
-
-    <div class="buttons">
-      <button onclick="clearDisplay()" class="calc-btn clear"><i class="fas fa-trash"></i></button>
-      <button onclick="append('/')" class="calc-btn"><i class="fas fa-divide"></i></button>
-      <button onclick="append('*')" class="calc-btn"><i class="fas fa-times"></i></button>
-      <button onclick="append('-')" class="calc-btn"><i class="fas fa-minus"></i></button>
-
-      <button onclick="append('7')" class="calc-btn">7</button>
-      <button onclick="append('8')" class="calc-btn">8</button>
-      <button onclick="append('9')" class="calc-btn">9</button>
-      <button onclick="append('+')" class="calc-btn"><i class="fas fa-plus"></i></button>
-
-      <button onclick="append('4')" class="calc-btn">4</button>
-      <button onclick="append('5')" class="calc-btn">5</button>
-      <button onclick="append('6')" class="calc-btn">6</button>
-      <button onclick="append('1')" class="calc-btn">1</button>
-
-      <button onclick="append('2')" class="calc-btn">2</button>
-      <button onclick="append('3')" class="calc-btn">3</button>
-      <button onclick="append('0')" class="calc-btn">0</button>
-      <button onclick="append('.')" class="calc-btn">.</button>
-
-      <button onclick="calculate()" class="calc-btn equal"><i class="fas fa-equals"></i></button>
+    <div class="top-actions">
+        <h1><i class="fas fa-calculator"></i> Calculatrice</h1>
+        <button class="btn btn-ghost" onclick="window.location='dashboard.php'">
+            <i class="fa fa-arrow-left"></i> Retour
+        </button>
     </div>
-  </div>
+
+    <div class="calculator">
+        
+        <div class="screen-container">
+            <div id="history" class="history-display"></div>
+            <input type="text" id="display" class="main-display" value="0" readonly>
+        </div>
+
+        <div class="buttons">
+            <button onclick="clearDisplay()" class="calc-btn clear" title="Effacer tout"><i class="fas fa-trash-alt"></i></button>
+            <button onclick="append('/')" class="calc-btn operator"><i class="fas fa-divide"></i></button>
+            <button onclick="append('*')" class="calc-btn operator"><i class="fas fa-times"></i></button>
+            <button onclick="append('-')" class="calc-btn operator"><i class="fas fa-minus"></i></button>
+
+            <button onclick="append('7')" class="calc-btn">7</button>
+            <button onclick="append('8')" class="calc-btn">8</button>
+            <button onclick="append('9')" class="calc-btn">9</button>
+            <button onclick="append('+')" class="calc-btn operator"><i class="fas fa-plus"></i></button>
+
+            <button onclick="append('4')" class="calc-btn">4</button>
+            <button onclick="append('5')" class="calc-btn">5</button>
+            <button onclick="append('6')" class="calc-btn">6</button>
+            <button onclick="append('1')" class="calc-btn">1</button>
+
+            <button onclick="append('2')" class="calc-btn">2</button>
+            <button onclick="append('3')" class="calc-btn">3</button>
+            <button onclick="append('0')" class="calc-btn">0</button>
+            <button onclick="append('.')" class="calc-btn">.</button>
+
+            <button onclick="calculate()" class="calc-btn equal"><i class="fas fa-equals"></i></button>
+        </div>
+    </div>
 
 </div>
 
 <script>
-let display = document.getElementById("display");
+const display = document.getElementById("display");
+const historyDisplay = document.getElementById("history");
+let shouldReset = false;
 
 function append(value) {
-    display.value += value;
+    // Si un calcul vient d'être fait et qu'on tape un chiffre, on réinitialise l'écran
+    if (shouldReset && !['+', '-', '*', '/'].includes(value)) {
+        display.value = "";
+    }
+    shouldReset = false;
+
+    // Éviter d'avoir plusieurs zéros initiaux inutiles
+    if (display.value === "0" && !['+', '-', '*', '/', '.'].includes(value)) {
+        display.value = value;
+    } else {
+        display.value += value;
+    }
+    
+    // Remplacer visuellement les opérateurs dans l'historique du haut pour plus de clarté
+    historyDisplay.innerText = display.value.replace(/\*/g, ' × ').replace(/\//g, ' ÷ ');
 }
 
 function clearDisplay() {
-    display.value = "";
+    display.value = "0";
+    historyDisplay.innerText = "";
+    shouldReset = false;
 }
 
 function calculate() {
+    if (!display.value || display.value === "0") return;
+
     try {
-        display.value = eval(display.value);
-    } catch {
+        // Remplacement sécurisé pour l'exécution d'expressions mathématiques simples basiques
+        // Utilisation de Function au lieu de eval() direct pour des raisons de sécurité
+        const expression = display.value;
+        const result = new Function(`return (${expression})`)();
+        
+        if (result === Infinity || isNaN(result)) {
+            display.value = "Erreur";
+        } else {
+            // Arrondir à 4 décimales maximum pour éviter les débordements (ex: 0.3333333333)
+            display.value = Number(Math.round(result + 'e4') + 'e-4');
+        }
+        shouldReset = true;
+    } catch (e) {
         display.value = "Erreur";
+        shouldReset = true;
     }
 }
 </script>

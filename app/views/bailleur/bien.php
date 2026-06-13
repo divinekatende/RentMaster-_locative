@@ -70,23 +70,46 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $conn->prepare($sql)->execute($params);
  
     } else {
-        /* INSERT */
-        $conn->prepare("INSERT INTO biens
-            (id_bailleur,image,titre,adresse,type_bien,surface,nombre_pieces,prix,statut,description)
-            VALUES
-            (id_bailleur,:image,:titre,:adresse,:type_bien,:surface,:nombre_pieces,:prix,:statut,:description)")
-        ->execute([
-            'id_bailleur'  => $id_bailleur,
-            'image'        => $image ?? '',
-            'titre'        => $_POST['titre'],
-            'adresse'      => $_POST['adresse'],
-            'type_bien'    => $_POST['type_bien'],
-            'surface'      => $_POST['surface'],
-            'nombre_pieces'=> $_POST['nombre_pieces'],
-            'prix'         => $_POST['prix'],
-            'statut'       => $_POST['statut'],
-            'description'  => $_POST['description']
-        ]);
+     /* INSERT */
+/* INSERT */
+$sql = "INSERT INTO biens (
+            id_bailleur,
+            image,
+            titre,
+            adresse,
+            type_bien,
+            surface,
+            nombre_pieces,
+            prix,
+            statut,
+            description
+        ) VALUES (
+            :id_bailleur,
+            :image,
+            :titre,
+            :adresse,
+            :type_bien,
+            :surface,
+            :nombre_pieces,
+            :prix,
+            :statut,
+            :description
+        )";
+
+$stmt = $conn->prepare($sql);
+
+$stmt->execute([
+    ':id_bailleur'   => $id_bailleur,
+    ':image'         => $image ?? '',
+    ':titre'         => $_POST['titre'] ?? '',
+    ':adresse'       => $_POST['adresse'] ?? '',
+    ':type_bien'     => $_POST['type_bien'] ?? '',
+    ':surface'       => $_POST['surface'] ?? null,
+    ':nombre_pieces' => $_POST['nombre_pieces'] ?? null,
+    ':prix'          => $_POST['prix'] ?? 0,
+    ':statut'        => $_POST['statut'] ?? 'Disponible',
+    ':description'   => $_POST['description'] ?? ''
+]);
     }
  
     header("Location: bien.php"); exit;

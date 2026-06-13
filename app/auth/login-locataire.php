@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once('../config/database.php');
+require_once(__DIR__ . '/../config/database.php');
 
 $message = '';
 
@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $database = new Database();
             $conn = $database->connect();
 
+            // Recherche du locataire par son matricule
             $sql = "SELECT * FROM locataires WHERE matricule = :matricule LIMIT 1";
             $stmt = $conn->prepare($sql);
             $stmt->bindParam(':matricule', $matricule);
@@ -26,35 +27,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($locataire) {
 
-                // ⚠️ LOGIQUE MOT DE PASSE (actuelle simple)
+                // CONNEXION SIMPLE : Comparaison directe en texte clair (SANS HACHAGE)
                 if ($mot_de_passe === $locataire['mot_de_passe']) {
 
                     // =========================
                     // SESSION USER
                     // =========================
-                    $_SESSION['id'] = $locataire['id_locataire'];
+                    $_SESSION['id_locataire'] = $locataire['id_locataire'];
                     $_SESSION['id_bailleur'] = $locataire['id_bailleur'];
                     $_SESSION['matricule'] = $locataire['matricule'];
                     $_SESSION['nom'] = $locataire['nom'];
-                    $_SESSION['postnom'] = $locataire['postnom'];
                     $_SESSION['prenom'] = $locataire['prenom'];
                     $_SESSION['role'] = 'locataire';
 
-                    $_SESSION['first_login'] = $locataire['first_login'];
-
                     // =========================
-                    // REDIRECTION LOGIQUE
+                    // REDIRECTION VERS LE DASHBOARD
                     // =========================
-                    if ($locataire['first_login'] == 1) {
-
-                        header('Location: ../views/locataire/profil_locataire.php');
-                        exit();
-
-                    } else {
-
-                        header('Location: ../views/locataire/dashboard_locataire.php');
-                        exit();
-                    }
+                    // On remonte d'un dossier (sort de auth/) et on va dans views/locataire/
+                    header('Location: ../views/locataire/dashboard_locataire.php');
+                    exit();
 
                 } else {
                     $message = "Mot de passe incorrect.";
@@ -65,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } catch (PDOException $e) {
-            $message = "Erreur serveur.";
+            $message = "Erreur serveur : " . $e->getMessage();
         }
 
     } else {
@@ -77,97 +68,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RentMaster | Connexion Locataire</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentMaster | Connexion Locataire</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', sans-serif;
-}
+        body {
+            min-height: 100vh;
+                background-image: url("../../public/assets/images/fond.png");
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-body {
-    min-height: 100vh;
-    background-image: url("../../public/assets/images/fond.png");
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
+        .container {
+            background: #fff;
+            width: 100%;
+            max-width: 420px;
+            padding: 35px 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        }
 
-.container {
-    background: #fff;
-    width: 100%;
-    max-width: 420px;
-    padding: 35px 30px;
-    border-radius: 16px;
-    text-align: center;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-}
+        .logo {
+            width: 180px;
+            margin: auto;
+        }
 
-.logo {
-    width: 180px;
-    margin: auto;
-}
+        h2 {
+            color: #2563eb;
+            margin-bottom: 15px;
+        }
 
-h2 {
-    color: #2563eb;
-    margin-bottom: 15px;
-}
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: left;
+        }
 
-.form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    text-align: left;
-}
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
 
-input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
+        input:focus {
+            border-color: #2563eb;
+            outline: none;
+        }
 
-input:focus {
-    border-color: #2563eb;
-    outline: none;
-}
+        button {
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
 
-button {
-    padding: 13px;
-    border: none;
-    border-radius: 10px;
-    background: #2563eb;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-}
+        button:hover {
+            background: #1e40af;
+        }
 
-button:hover {
-    background: #1e40af;
-}
+        .links {
+            margin-top: 15px;
+            text-align: center;
+        }
 
-.error {
-    background: #fee2e2;
-    color: #b91c1c;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-</style>
+        .links a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
 
-    <img src="../../public/assets/images/logo.png" class="logo">
+    <img src="../../public/assets/images/logo.png" class="logo" alt="Logo">
 
     <h2>Connexion Locataire</h2>
 
@@ -177,15 +183,19 @@ button:hover {
         </div>
     <?php endif; ?>
 
-    <form class="form" method="POST">
-
+    <form class="form" action="" method="POST">
         <input type="text" name="matricule" placeholder="Matricule" required>
-
         <input type="password" name="mot_de_passe" placeholder="Mot de passe" required>
-
         <button type="submit">Se connecter</button>
-
     </form>
+
+    <div class="links">
+        <a href="../controllers/logout.php"> ← Retour à l’accueil</a>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 RentMaster</p>
+    </footer>
 
 </div>
 

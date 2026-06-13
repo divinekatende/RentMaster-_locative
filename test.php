@@ -9,3 +9,5 @@ $db = new Database();
 $conn = $db->connect();
 
 echo "Connexion réussie à RENTMASTER";
+
+

@@ -177,22 +177,81 @@ $contratsJson = json_encode($contrats);
             transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
         }
         .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
-         
-        /* TABLEAU DU CONTENU */
-        .table-container {
-            background: var(--surface); border-radius: var(--radius-lg);
-            border: 1px solid var(--border-color); box-shadow: var(--shadow-md);
+
+        /* ==========================================================================
+           GRILLE DE CARTES / BLOCS (Génération Moderne)
+           ========================================================================== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+        .payment-card {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .payment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+        .card-title-area h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+        .card-id {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        
+        /* Contenu masqué par défaut (Accordéon) */
+        .card-details {
+            max-height: 0;
             overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            border-top: 0 solid var(--border-color);
+            margin-top: 0;
+            padding-top: 0;
         }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th {
-            background: #f8fafc; color: var(--text-muted);
-            font-weight: 600; font-size: 13px; text-transform: uppercase;
-            letter-spacing: 0.03em; padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+        .card-details.open {
+            max-height: 500px; /* Assez grand pour contenir les infos */
+            border-top: 1px solid var(--border-color);
+            margin-top: 14px;
+            padding-top: 14px;
+            transition: max-height 0.4s ease-in;
         }
-        td { padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background: #fafcff; }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .info-item span { color: var(--text-muted); }
+        .info-item strong { color: var(--text-main); font-weight: 600; }
+
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-color);
+        }
          
         /* BADGES */
         .badge {
@@ -210,16 +269,18 @@ $contratsJson = json_encode($contrats);
          
         /* BOUTONS D'ACTION */
         .action-btn {
-            width: 32px; height: 32px; border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center;
+            height: 34px; padding: 0 12px; border-radius: var(--radius-sm);
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
             border: 1px solid var(--border-color); background: var(--surface);
             color: var(--text-muted); cursor: pointer; transition: all 0.2s;
-            text-decoration: none;
+            text-decoration: none; font-size: 13px; font-weight: 500;
         }
+        .action-btn.toggle-btn { color: var(--primary); border-color: rgba(59, 130, 246, 0.3); background: var(--primary-soft); }
+        .action-btn.toggle-btn:hover { background: var(--primary-light); color: white; }
         .action-btn.delete:hover { border-color: #fca5a5; color: var(--danger); background: var(--danger-soft); }
          
         /* EMPTY STATE */
-        .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+        .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); grid-column: 1 / -1; }
         .empty-state i { font-size: 48px; margin-bottom: 16px; color: #cbd5e1; display: block; }
         .empty-state p { font-size: 15px; font-weight: 500; }
          
@@ -302,10 +363,12 @@ $contratsJson = json_encode($contrats);
             .sidebar.show { left: 0; }
             .main-content { margin-left: 0; padding: 80px 16px 24px; max-width: 100%; }
             .btn-menu-mobile { display: flex; align-items: center; justify-content: center; }
-            .table-container { display: block; overflow-x: auto; white-space: nowrap; }
             .btn-group { flex-direction: column; }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script src="theme.js"></script>
 </head>
 <body>
  
@@ -346,83 +409,97 @@ $contratsJson = json_encode($contrats);
     </button>
   </div>
  
-  <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th><th>Locataire</th><th>Bien</th>
-            <th>Mois</th><th>Versement</th><th>Loyer</th>
-            <th>Progression</th><th>Statut</th><th>Date</th><th style="text-align: center;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if (empty($paiements)): ?>
-          <tr><td colspan="10">
-            <div class="empty-state">
-              <i class="fa-regular fa-credit-card"></i>
-              <p>Aucun paiement enregistré pour le moment.</p>
-            </div>
-          </td></tr>
-          <?php else: ?>
-          <?php
-            // Calculer progression par contrat+mois pour la barre
-            $progCache = [];
-            foreach ($paiements as $p) {
-                $key = $p['id_contrat'] . '_' . $p['mois_annee'];
-                if (!isset($progCache[$key])) {
-                    $resume = $ctrl->resumeMoisContrat($p['id_contrat'], $p['mois_annee']);
-                    $progCache[$key] = [
-                        'total' => (float)$resume['total_verse'],
-                        'loyer' => (float)$p['loyer_mensuel']
-                    ];
-                }
+  <div class="cards-grid">
+      <?php if (empty($paiements)): ?>
+        <div class="empty-state">
+          <i class="fa-regular fa-credit-card"></i>
+          <p>Aucun paiement enregistré pour le moment.</p>
+        </div>
+      <?php else: ?>
+      <?php
+        // Calculer progression par contrat+mois
+        $progCache = [];
+        foreach ($paiements as $p) {
+            $key = $p['id_contrat'] . '_' . $p['mois_annee'];
+            if (!isset($progCache[$key])) {
+                $resume = $ctrl->resumeMoisContrat($p['id_contrat'], $p['mois_annee']);
+                $progCache[$key] = [
+                    'total' => (float)$resume['total_verse'],
+                    'loyer' => (float)$p['loyer_mensuel']
+                ];
             }
-            // Nom des mois FR
-            $moisFr = ['01'=>'Janv.','02'=>'Févr.','03'=>'Mars','04'=>'Avr.',
-                       '05'=>'Mai','06'=>'Juin','07'=>'Juil.','08'=>'Août',
-                       '09'=>'Sept.','10'=>'Oct.','11'=>'Nov.','12'=>'Déc.'];
-          ?>
-          <?php foreach($paiements as $p):
-            $key  = $p['id_contrat'] . '_' . $p['mois_annee'];
-            $prog = $progCache[$key];
-            $pct  = $prog['loyer'] > 0 ? min(100, round($prog['total'] / $prog['loyer'] * 100)) : 0;
-            $complet = $pct >= 100;
-            [$annee, $mNum] = explode('-', $p['mois_annee']);
-            $nomMois = ($moisFr[$mNum] ?? $mNum) . ' ' . $annee;
-            $badgeCls = $p['statut'] === 'Complet' ? 'badge-complet' : 'badge-acompte';
-            $badgeIco = $p['statut'] === 'Complet' ? '<i class="fa fa-check-circle"></i>' : '<i class="fa fa-spinner fa-spin" style="font-size:11px"></i>';
-          ?>
-          <tr>
-            <td><span style="font-weight: 600; color: var(--text-muted);">#<?= $p['id_paiement'] ?></span></td>
-            <td><strong style="color: var(--text-main);"><?= htmlspecialchars($p['loc_nom'].' '.$p['loc_prenom']) ?></strong></td>
-            <td><?= htmlspecialchars($p['bien_nom']) ?></td>
-            <td><strong><?= $nomMois ?></strong></td>
-            <td><span style="font-weight:600; color:var(--primary);"><?= number_format($p['montant_verse'], 2) ?> $</span></td>
-            <td><?= number_format($p['loyer_mensuel'], 2) ?> $</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="progress-wrap" style="flex:1;">
-                  <div class="progress-bar <?= $complet ? 'complet' : '' ?>" style="width:<?= $pct ?>%"></div>
-                </div>
-                <span style="font-size:12px; font-weight:600; color:var(--text-muted); min-width:35px; text-align:right;"><?= $pct ?>%</span>
+        }
+        $moisFr = ['01'=>'Janv.','02'=>'Févr.','03'=>'Mars','04'=>'Avr.',
+                   '05'=>'Mai','06'=>'Juin','07'=>'Juil.','08'=>'Août',
+                   '09'=>'Sept.','10'=>'Oct.','11'=>'Nov.','12'=>'Déc.'];
+      ?>
+      <?php foreach($paiements as $p):
+        $key  = $p['id_contrat'] . '_' . $p['mois_annee'];
+        $prog = $progCache[$key];
+        $pct  = $prog['loyer'] > 0 ? min(100, round($prog['total'] / $prog['loyer'] * 100)) : 0;
+        $complet = $pct >= 100;
+        [$annee, $mNum] = explode('-', $p['mois_annee']);
+        $nomMois = ($moisFr[$mNum] ?? $mNum) . ' ' . $annee;
+        $badgeCls = $p['statut'] === 'Complet' ? 'badge-complet' : 'badge-acompte';
+        $badgeIco = $p['statut'] === 'Complet' ? '<i class="fa fa-check-circle"></i>' : '<i class="fa fa-spinner fa-spin" style="font-size:11px"></i>';
+      ?>
+      
+      <div class="payment-card">
+          <div class="card-header">
+              <div class="card-title-area">
+                  <h3><?= htmlspecialchars($p['bien_nom']) ?></h3>
+                  <span class="card-id">ID Versement: #<?= $p['id_paiement'] ?></span>
               </div>
-            </td>
-            <td><span class="badge <?= $badgeCls ?>"><?= $badgeIco ?> <?= $p['statut'] ?></span></td>
-            <td><span style="color:var(--text-muted); font-size:13px;"><?= $p['date_paiement'] ?></span></td>
-            <td>
-              <div style="display:flex; justify-content:center;">
+              <span class="badge <?= $badgeCls ?>"><?= $badgeIco ?> <?= $p['statut'] ?></span>
+          </div>
+
+          <div class="card-details" id="details-<?= $p['id_paiement'] ?>">
+              <div class="info-item">
+                  <span>Locataire :</span>
+                  <strong><?= htmlspecialchars($p['loc_nom'].' '.$p['loc_prenom']) ?></strong>
+              </div>
+              <div class="info-item">
+                  <span>Période :</span>
+                  <strong><?= $nomMois ?></strong>
+              </div>
+              <div class="info-item">
+                  <span>Ce versement :</span>
+                  <strong style="color:var(--primary);"><?= number_format($p['montant_verse'], 2) ?> $</strong>
+              </div>
+              <div class="info-item">
+                  <span>Loyer Mensuel :</span>
+                  <strong><?= number_format($p['loyer_mensuel'], 2) ?> $</strong>
+              </div>
+              <div class="info-item">
+                  <span>Date :</span>
+                  <strong><?= $p['date_paiement'] ?></strong>
+              </div>
+              
+              <div style="margin-top: 12px; margin-bottom: 6px;">
+                  <span style="font-size: 12px; color: var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">Progression du mois :</span>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="progress-wrap" style="flex:1;">
+                      <div class="progress-bar <?= $complet ? 'complet' : '' ?>" style="width:<?= $pct ?>%"></div>
+                    </div>
+                    <span style="font-size:12px; font-weight:600; color:var(--text-muted);"><?= $pct ?>%</span>
+                  </div>
+              </div>
+
+              <div class="card-actions">
                   <a href="paiement.php?delete=<?= $p['id_paiement'] ?>"
                      class="action-btn delete"
                      onclick="return confirm('Supprimer ce versement ?')" title="Supprimer">
-                    <i class="fa fa-trash"></i>
+                    <i class="fa fa-trash"></i> Supprimer
                   </a>
               </div>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-          <?php endif; ?>
-        </tbody>
-      </table>
+          </div>
+
+          <button class="action-btn toggle-btn" onclick="toggleDetails(<?= $p['id_paiement'] ?>, this)" style="margin-top:14px; width:100%;">
+              <i class="fa fa-chevron-down"></i> Voir plus
+          </button>
+      </div>
+      <?php endforeach; ?>
+      <?php endif; ?>
   </div>
 </main>
 </div>
@@ -515,6 +592,18 @@ $contratsJson = json_encode($contrats);
 // Données PHP → JS
 var resumes  = <?= $resumesJson ?>;
 var contrats = <?= $contratsJson ?>;
+
+// Fonction pour dérouler les détails d'un bloc de paiement
+function toggleDetails(id, btn) {
+    var details = document.getElementById('details-' + id);
+    if(details.classList.contains('open')) {
+        details.classList.remove('open');
+        btn.innerHTML = '<i class="fa fa-chevron-down"></i> Voir plus';
+    } else {
+        details.classList.add('open');
+        btn.innerHTML = '<i class="fa fa-chevron-up"></i> Moins d\'infos';
+    }
+}
  
 function updateInfo() {
     var contratId = document.getElementById('contratSelect').value;
@@ -592,17 +681,14 @@ function closeForm() {
     document.getElementById('formOverlay').classList.remove('show');
 }
  
-// Fermer en cliquant en dehors du conteneur blanc
 document.getElementById('formOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeForm();
 });
  
-// Ouverture automatique en cas d'erreur de soumission
 <?php if (!empty($erreur)): ?>
 window.addEventListener('DOMContentLoaded', function() { openForm(); });
 <?php endif; ?>
  
-// Menu Toggle Mobile 
 document.getElementById('menuToggle').addEventListener('click', function() {
     document.getElementById('appSidebar').classList.toggle('show');
 });

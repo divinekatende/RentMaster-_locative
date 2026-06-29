@@ -2,16 +2,19 @@
 session_start();
 require_once(__DIR__ . '/../../config/database.php');
 
-// 1. Déterminer qui est connecté (Bailleur ou Locataire)
+// 1. Déterminer qui est connecté de manière stricte et étanche
 $id_utilisateur = null;
 $type_utilisateur = null;
 
-if (isset($_SESSION['id_bailleur'])) {
-    $id_utilisateur = $_SESSION['id_bailleur'];
-    $type_utilisateur = 'bailleur';
-} elseif (isset($_SESSION['id_locataire'])) {
+if (isset($_SESSION['id_locataire'])) {
     $id_utilisateur = $_SESSION['id_locataire'];
     $type_utilisateur = 'locataire';
+} elseif (isset($_SESSION['id_bailleur'])) { 
+    $id_utilisateur = $_SESSION['id_bailleur'];
+    $type_utilisateur = 'bailleur';
+} elseif (isset($_SESSION['id']) && isset($_SESSION['type_utilisateur'])) {
+    $id_utilisateur = $_SESSION['id'];
+    $type_utilisateur = $_SESSION['type_utilisateur'];
 } else {
     die("Accès refusé. Veuillez vous connecter.");
 }
@@ -22,11 +25,11 @@ $conn = (new Database())->connect();
    TRAITEMENT DE L'ENVOI (POST)
    ========================================================================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'envoyer') {
-    $destinataire_id = intval($_POST['destinataire_id'] ?? 0);
+    $destinataire_id = $_POST['destinataire_id'] ?? '';
     $destinataire_type = ($type_utilisateur === 'bailleur') ? 'locataire' : 'bailleur';
     $contenu = trim($_POST['contenu'] ?? '');
 
-    if (!empty($contenu) && $destinataire_id > 0) {
+    if (!empty($contenu) && !empty($destinataire_id)) {
         try {
             $stmt = $conn->prepare("
                 INSERT INTO messages (expediteur_id, expediteur_type, destinataire_id, destinataire_type, contenu, date_message)
@@ -39,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 ':dest_type' => $destinataire_type,
                 ':contenu' => $contenu
             ]);
-            header("Location: messagerie.php?contact_id=" . $destinataire_id);
+            
+            header("Location: " . $_SERVER['PHP_SELF'] . "?contact_id=" . urlencode($destinataire_id));
             exit;
         } catch (PDOException $e) {
             $erreur = "Erreur d'envoi : " . $e->getMessage();
@@ -48,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 /* ==========================================================================
-   RÉCUPÉRATION DES CONTACTS (Pour la liste déroulante)
+   RÉCUPÉRATION DES CONTACTS
    ========================================================================== */
 $contacts = [];
 try {
@@ -62,7 +66,7 @@ try {
         ");
     } else {
         $stmt = $conn->prepare("
-            SELECT DISTINCT b.id_bailleur AS id, ba.nom, ba.prenom 
+            SELECT DISTINCT ba.id_bailleur AS id, ba.nom, ba.prenom 
             FROM bailleurs ba
             INNER JOIN biens b ON ba.id_bailleur = b.id_bailleur
             INNER JOIN contrats c ON b.id_bien = c.id_bien
@@ -75,14 +79,22 @@ try {
     // Erreur silencieuse
 }
 
-// Contact actif
-$contact_id_selectionne = isset($_GET['contact_id']) ? intval($_GET['contact_id']) : ($contacts[0]['id'] ?? 0);
+$contact_id_selectionne = isset($_GET['contact_id']) ? $_GET['contact_id'] : ($contacts[0]['id'] ?? '');
+
+// Récupérer le nom du contact actif
+$nom_contact_actif = "Sélectionnez un fil de discussion";
+foreach ($contacts as $c) {
+    if ($c['id'] == $contact_id_selectionne) {
+        $nom_contact_actif = htmlspecialchars($c['prenom'] . ' ' . $c['nom']);
+        break;
+    }
+}
 
 /* ==========================================================================
    RÉCUPÉRATION DE LA DISCUSSION SÉLECTIONNÉE
    ========================================================================== */
 $discussion = [];
-if ($contact_id_selectionne > 0) {
+if (!empty($contact_id_selectionne)) {
     try {
         $destinataire_type_recherche = ($type_utilisateur === 'bailleur') ? 'locataire' : 'bailleur';
         
@@ -102,7 +114,7 @@ if ($contact_id_selectionne > 0) {
         ]);
         $discussion = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        // Erreur
+        // Erreur silencieuse
     }
 }
 ?>
@@ -117,7 +129,7 @@ if ($contact_id_selectionne > 0) {
     
     <style>
         :root {
-            --bg-app: #f8fafc;
+            --bg-app: #f1f5f9;
             --surface: #ffffff;
             --primary: #1e40af;
             --primary-light: #3b82f6;
@@ -128,67 +140,98 @@ if ($contact_id_selectionne > 0) {
             --bubble-received: #f1f5f9;
             --radius-lg: 16px;
             --radius-md: 12px;
-            --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-            --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+            --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.05);
+            --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.06);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        body { background: var(--bg-app); color: var(--text-main); min-height: 100vh; padding: 24px; display: flex; flex-direction: column; }
+        body { background: var(--bg-app); color: var(--text-main); height: 100vh; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
 
         /* NAVIGATION BAR */
-        nav { background: var(--surface); padding: 14px 28px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; gap: 28px; margin-bottom: 24px; align-items: center; border: 1px solid var(--border-color); }
+        nav { background: var(--surface); padding: 14px 28px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; gap: 28px; margin-bottom: 16px; align-items: center; border: 1px solid var(--border-color); flex-shrink: 0; }
         nav a { text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 14px; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
         nav a:hover, nav a.active { color: var(--primary); font-weight: 600; }
 
-        /* CONTENEUR PRINCIPAL (MONO-BLOC PLEINE LARGEUR) */
-        .chat-window-box {
+        /* ARY LAYOUT EN DEUX COLONNES */
+        .messaging-wrapper {
+            display: flex;
+            flex: 1;
             background: var(--surface);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-md);
             border: 1px solid var(--border-color);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
 
-        /* BANDEAU TOP : SÉLECTEUR DE CONTACT */
-        .chat-top-bar {
-            padding: 20px 24px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border-color);
+        /* SIDEBAR DE GAUCHE : LES CONTACTS */
+        .contacts-sidebar {
+            width: 320px;
+            border-right: 1px solid var(--border-color);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
+            flex-direction: column;
+            background: #fafafa;
         }
-        .chat-top-bar h2 {
-            font-size: 18px;
+        .sidebar-title {
+            padding: 24px;
+            font-size: 16px;
             font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
             color: var(--text-main);
-            letter-spacing: -0.02em;
         }
-        
-        /* STYLE DU SELECT DROPDOWN PRO */
-        .select-contact-dropdown {
-            padding: 10px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-main);
-            background-color: var(--bg-app);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            outline: none;
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
             cursor: pointer;
+            text-decoration: none;
             transition: all 0.2s;
-            min-width: 250px;
         }
-        .select-contact-dropdown:focus {
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        .contact-item:hover { background: #f1f5f9; }
+        .contact-item.active { background: var(--primary-soft); border-left: 4px solid var(--primary); }
+        
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .contact-item.active .contact-avatar { background: var(--primary); color: white; }
+        
+        .contact-details { display: flex; flex-direction: column; gap: 2px; }
+        .contact-name { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .contact-role { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 500; }
+
+        /* ZONE DE DROITE : LE CHAT COMPLET */
+        .chat-main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
         }
 
-        /* THREAD DES MESSAGES */
+        .chat-top-bar {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-top-bar h2 { font-size: 16px; font-weight: 600; color: var(--text-main); }
+
+        /* SCROLL TIMELINE */
         .chat-timeline {
             flex: 1;
             padding: 24px;
@@ -196,190 +239,179 @@ if ($contact_id_selectionne > 0) {
             background: #f8fafc;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            min-height: 400px;
+            gap: 14px;
         }
 
-        /* BULLES DU NOUVEAU DESIGN */
+        /* STYLE DES BULLES */
         .bubble {
-            padding: 12px 18px;
-            border-radius: 14px;
-            max-width: 65%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            max-width: 60%;
             word-wrap: break-word;
             font-size: 14px;
             line-height: 1.5;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-            animation: pop 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            position: relative;
         }
-        @keyframes pop { from { transform: scale(0.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .bubble-time-info { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 10px; margin-top: 6px; opacity: 0.7; }
+        .bubble-time-info { display: flex; align-items: center; gap: 4px; font-size: 10px; margin-top: 5px; opacity: 0.6; justify-content: flex-end; }
 
-        /* OUTGOING (Moi, Bleu) */
-        .bubble.outgoing {
+        .bubble.cote-droite {
             background: var(--primary);
             color: #ffffff;
             align-self: flex-end;
-            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
         }
-        /* INCOMING (L'autre, Gris clair) */
-        .bubble.incoming {
+        .bubble.cote-gauche {
             background: var(--bubble-received);
             color: var(--text-main);
             align-self: flex-start;
-            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
             border: 1px solid var(--border-color);
         }
 
-        /* BARRE D'ACTION BASSE (FORMULAIRE) */
-        .chat-bottom-bar {
-            padding: 18px 24px;
-            background: var(--surface);
-            border-top: 1px solid var(--border-color);
-        }
-        .message-form-layout {
-            display: flex;
-            gap: 14px;
-            align-items: center;
-        }
+        /* FORMULAIRE D'ENVOI */
+        .chat-bottom-bar { padding: 16px 24px; background: var(--surface); border-top: 1px solid var(--border-color); }
+        .message-form-layout { display: flex; gap: 12px; align-items: center; }
         .message-input-field {
             flex: 1;
-            padding: 14px 20px;
-            border-radius: 30px;
+            padding: 12px 20px;
+            border-radius: 24px;
             border: 1px solid var(--border-color);
             background: #f8fafc;
-            height: 48px;
             outline: none;
             font-size: 14px;
             color: var(--text-main);
             transition: all 0.2s;
         }
-        .message-input-field:focus {
-            border-color: var(--primary-light);
-            background: var(--surface);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+        .message-input-field:focus { border-color: var(--primary-light); background: var(--surface); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
         .btn-send-message {
-            width: 48px;
-            height: 48px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             border: none;
             background: var(--primary);
             color: white;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.2);
+            box-shadow: 0 4px 6px rgba(30, 64, 175, 0.15);
         }
-        .btn-send-message:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .btn-send-message:hover { background: var(--primary-light); transform: scale(1.03); }
 
-        /* ÉTAT VIDE */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            color: var(--text-muted);
-            gap: 12px;
-            padding: 60px 24px;
-        }
-        .empty-state i { font-size: 44px; color: #cbd5e1; }
-        .empty-state h3 { font-size: 16px; color: var(--text-main); font-weight: 600; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); gap: 12px; text-align: center; }
+        .empty-state i { font-size: 48px; color: #cbd5e1; }
+        .empty-state h3 { font-size: 15px; color: var(--text-main); font-weight: 600; }
     </style>
 </head>
 <body>
 
-    <!-- NAVIGATION -->
     <nav>
-        <a href="dashboard_locataire.php"><i class="fa-solid fa-chart-pie"></i> Tableau de bord</a>
-        <a href="contrat_locataire.php"><i class="fa-solid fa-file-signature"></i> Contrats</a>
+        <?php if ($type_utilisateur === 'bailleur'): ?>
+            <a href="dashboard_bailleur.php"><i class="fa-solid fa-chart-pie"></i> Tableau de bord</a>
+            <a href="contrats_bailleur.php"><i class="fa-solid fa-file-signature"></i> Gestion Contrats</a>
+        <?php else: ?>
+            <a href="dashboard_locataire.php"><i class="fa-solid fa-chart-pie"></i> Tableau de bord</a>
+            <a href="contrat_locataire.php"><i class="fa-solid fa-file-signature"></i> Mes Contrats</a>
+        <?php endif; ?>
         <a href="messagerie.php" class="active"><i class="fa-solid fa-envelope"></i> Centre de messagerie</a>
     </nav>
 
-    <!-- FENÊTRE DE DISCUSSION PLEINE LARGEUR -->
-    <div class="chat-window-box">
+    <?php if (isset($erreur)): ?>
+        <div style="background: #fee2e2; color: #991b1b; padding: 12px; border-radius: var(--radius-md); margin-bottom: 12px; border: 1px solid #fca5a5; font-size: 14px;">
+            <?= htmlspecialchars($erreur) ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="messaging-wrapper">
         
-        <!-- EN-TÊTE AVEC LA LISTE DÉROULANTE INTERACTIVE -->
-        <div class="chat-top-bar">
-            <h2><i class="fa-regular fa-comments" style="color: var(--primary); margin-right: 8px;"></i> Messagerie sécurisée</h2>
-            
-            <select class="select-contact-dropdown" onchange="changerDiscussion(this.value)">
+        <div class="contacts-sidebar">
+            <div class="sidebar-title"><i class="fa-regular fa-comments"></i> Conversations</div>
+            <div class="contacts-list">
                 <?php if (empty($contacts)): ?>
-                    <option value="">Aucun contact disponible</option>
+                    <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">Aucun contact associé à vos contrats.</div>
                 <?php else: ?>
                     <?php foreach ($contacts as $c): ?>
-                        <option value="<?= $c['id'] ?>" <?= ($c['id'] == $contact_id_selectionne) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($c['prenom'] . ' ' . $c['nom']) ?> (<?= $type_utilisateur === 'bailleur' ? 'Locataire' : 'Propriétaire' ?>)
-                        </option>
+                        <?php 
+                        $initiales = strtoupper(substr($c['prenom'], 0, 1) . substr($c['nom'], 0, 1));
+                        $isActive = ($c['id'] == $contact_id_selectionne);
+                        ?>
+                        <a href="?contact_id=<?= urlencode($c['id']) ?>" class="contact-item <?= $isActive ? 'active' : '' ?>">
+                            <div class="contact-avatar"><?= $initiales ?></div>
+                            <div class="contact-details">
+                                <span class="contact-name"><?= htmlspecialchars($c['prenom'] . ' ' . $c['nom']) ?></span>
+                                <span class="contact-role"><?= $type_utilisateur === 'bailleur' ? 'Locataire' : 'Propriétaire' ?></span>
+                            </div>
+                        </a>
                     <?php endforeach; ?>
                 <?php endif; ?>
-            </select>
+            </div>
         </div>
 
-        <!-- LISTE DES MESSAGES -->
-        <div class="chat-timeline" id="chatTimeline">
-            <?php if ($contact_id_selectionne > 0): ?>
-                <?php if (empty($discussion)): ?>
-                    <div class="empty-state">
-                        <i class="fa-regular fa-paper-plane"></i>
-                        <h3>Aucun échange enregistré</h3>
-                        <p>Envoyez un message ci-dessous pour démarrer la discussion officielle.</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($discussion as $msg): ?>
-                        <?php $estMoi = ($msg['expediteur_id'] == $id_utilisateur && $msg['expediteur_type'] === $type_utilisateur); ?>
-                        
-                        <div class="bubble <?= $estMoi ? 'outgoing' : 'incoming' ?>">
-                            <?= htmlspecialchars($msg['contenu']) ?>
-                            <div class="bubble-time-info">
-                                <span><?= date('H:i', strtotime($msg['date_message'])) ?></span>
-                                <?php if ($estMoi): ?>
-                                    <span>•</span>
-                                    <i class="fas fa-check-double" style="color: #60a5fa;"></i>
-                                <?php endif; ?>
-                            </div>
+        <div class="chat-main-area">
+            <div class="chat-top-bar">
+                <h2><?= $nom_contact_actif ?></h2>
+                <span style="font-size: 12px; color: var(--text-muted); background: #f1f5f9; padding: 4px 10px; border-radius: 12px; font-weight: 500;">
+                    <i class="fa-solid fa-shield-halved"></i> Fil de discussion sécurisé
+                </span>
+            </div>
+
+            <div class="chat-timeline" id="chatTimeline">
+                <?php if (!empty($contact_id_selectionne)): ?>
+                    <?php if (empty($discussion)): ?>
+                        <div class="empty-state">
+                            <i class="fa-regular fa-paper-plane"></i>
+                            <h3>Aucun échange enregistré</h3>
+                            <p>Envoyez un premier message officiel ci-dessous pour lancer la discussion.</p>
                         </div>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach ($discussion as $msg): ?>
+                            <?php 
+                            $estMoi = ($msg['expediteur_id'] == $id_utilisateur && $msg['expediteur_type'] === $type_utilisateur); 
+                            $classePosition = $estMoi ? 'cote-droite' : 'cote-gauche';
+                            ?>
+                            <div class="bubble <?= $classePosition ?>">
+                                <?= htmlspecialchars($msg['contenu']) ?>
+                                <div class="bubble-time-info">
+                                    <span><?= date('H:i', strtotime($msg['date_message'])) ?></span>
+                                    <?php if ($estMoi): ?>
+                                        <span>•</span>
+                                        <i class="fas fa-check" style="color: rgba(255,255,255,0.7);"></i>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-user-slash"></i>
+                        <h3>Aucune conversation active</h3>
+                        <p>Veuillez sélectionner un contact dans la liste à gauche pour commencer.</p>
+                    </div>
                 <?php endif; ?>
-            <?php else: ?>
-                <div class="empty-state">
-                    <i class="fa-solid fa-user-slash"></i>
-                    <h3>Aucun contact sélectionné</h3>
-                    <p>Veuillez choisir un destinataire en haut à droite.</p>
+            </div>
+
+            <?php if (!empty($contact_id_selectionne)): ?>
+                <div class="chat-bottom-bar">
+                    <form id="formMessage" method="POST" action="?contact_id=<?= urlencode($contact_id_selectionne) ?>" class="message-form-layout">
+                        <input type="hidden" name="action" value="envoyer">
+                        <input type="hidden" name="destinataire_id" value="<?= htmlspecialchars($contact_id_selectionne) ?>">
+                        
+                        <input type="text" name="contenu" id="messageInput" class="message-input-field" placeholder="Écrivez votre message officiel ici..." required autocomplete="off">
+                        <button type="submit" class="btn-send-message"><i class="fa-solid fa-paper-plane"></i></button>
+                    </form>
                 </div>
             <?php endif; ?>
-        </div>
 
-        <!-- ZONE DE SAISIE DE TEXTE -->
-        <?php if ($contact_id_selectionne > 0): ?>
-            <div class="chat-bottom-bar">
-                <form id="formMessage" method="POST" action="messagerie.php?contact_id=<?= $contact_id_selectionne ?>" class="message-form-layout">
-                    <input type="hidden" name="action" value="envoyer">
-                    <input type="hidden" name="destinataire_id" value="<?= $contact_id_selectionne ?>">
-                    
-                    <input type="text" name="contenu" id="messageInput" class="message-input-field" placeholder="Écrivez votre message officiel ici..." required autocomplete="off">
-                    <button type="submit" class="btn-send-message"><i class="fa-solid fa-paper-plane"></i></button>
-                </form>
-            </div>
-        <?php endif; ?>
+        </div>
 
     </div>
 
     <script>
-    // Redirection au changement de contact dans le select
-    function changerDiscussion(contactId) {
-        if(contactId) {
-            window.location.href = "messagerie.php?contact_id=" + contactId;
-        }
-    }
-
-    // Garder le défilement automatique vers le bas
     function scrollTimelineToBottom() {
         const timeline = document.getElementById("chatTimeline");
         if(timeline) {
@@ -387,6 +419,7 @@ if ($contact_id_selectionne > 0) {
         }
     }
 
+    // Lance le scroll au chargement complet de l'interface
     document.addEventListener("DOMContentLoaded", () => {
         scrollTimelineToBottom();
     });

@@ -1,125 +1,131 @@
 <?php
 session_start();
-require_once('../../config/database.php');
- 
+require_once __DIR__ . '/../../config/database.php';
+
 $conn = (new Database())->connect();
- 
+
 /* =========================
    SECURITE SESSION
 ========================= */
 $id_bailleur = $_SESSION['id'] ?? null;
-if (!$id_bailleur) die("Accès refusé : session invalide");
- 
+if (!$id_bailleur) {
+    header('Location: ../../auth/login.php');
+    exit;
+}
+
 /* =========================
    SUPPRESSION
 ========================= */
 if (isset($_GET['delete'])) {
     $id_bien = (int) $_GET['delete'];
-    $conn->prepare("DELETE FROM biens WHERE id_bien=:id_bien AND id_bailleur=:id_bailleur")
-         ->execute(['id_bien' => $id_bien, 'id_bailleur' => $id_bailleur]);
-    header("Location: bien.php"); exit;
+
+    // Récupérer l'image pour la supprimer du disque
+    $stmt = $conn->prepare("SELECT image FROM biens WHERE id_bien=:id AND id_bailleur=:b");
+    $stmt->execute(['id' => $id_bien, 'b' => $id_bailleur]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row && !empty($row['image'])) {
+        $fichier = __DIR__ . '/../../../public/uploads/' . $row['image'];
+        if (file_exists($fichier)) @unlink($fichier);
+    }
+
+    $conn->prepare("DELETE FROM biens WHERE id_bien=:id AND id_bailleur=:b")
+         ->execute(['id' => $id_bien, 'b' => $id_bailleur]);
+
+    header("Location: bien.php");
+    exit;
 }
- 
+
 /* =========================
    EDIT MODE
 ========================= */
 $editMode = false;
 $bienEdit = null;
- 
+
 if (isset($_GET['edit'])) {
     $editMode = true;
     $id_bien  = (int) $_GET['edit'];
-    $stmt = $conn->prepare("SELECT * FROM biens WHERE id_bien=:id_bien AND id_bailleur=:id_bailleur");
-    $stmt->execute(['id_bien' => $id_bien, 'id_bailleur' => $id_bailleur]);
+    $stmt = $conn->prepare("SELECT * FROM biens WHERE id_bien=:id AND id_bailleur=:b");
+    $stmt->execute(['id' => $id_bien, 'b' => $id_bailleur]);
     $bienEdit = $stmt->fetch(PDO::FETCH_ASSOC);
 }
- 
+
 /* =========================
    INSERT / UPDATE
 ========================= */
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
- 
-    $image = null;
-    if (!empty($_FILES["image"]["name"])) {
-        $image = time() . "_" . basename($_FILES["image"]["name"]);
-        move_uploaded_file($_FILES["image"]["tmp_name"], "../../public/uploads/" . $image);
+
+    $image     = null;
+    $uploadDir = __DIR__ . '/../../../public/uploads/';
+
+    // Créer le dossier si nécessaire
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
     }
- 
+
+    if (!empty($_FILES["image"]["name"]) && $_FILES["image"]["error"] === UPLOAD_ERR_OK) {
+        $ext           = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
+        $extsAutorisees = ['jpg', 'jpeg', 'png', 'webp'];
+
+        if (in_array($ext, $extsAutorisees)) {
+            $image = time() . '_' . uniqid() . '.' . $ext;
+            move_uploaded_file($_FILES["image"]["tmp_name"], $uploadDir . $image);
+        }
+    }
+
     if (!empty($_POST['id_bien'])) {
-        /* UPDATE */
+        /* ── UPDATE ── */
         $sql = "UPDATE biens SET
                     titre=:titre, adresse=:adresse, type_bien=:type_bien,
                     surface=:surface, nombre_pieces=:nombre_pieces,
                     prix=:prix, statut=:statut, description=:description"
-             . ($image ? ", image=:image" : "") . "
-                WHERE id_bien=:id_bien AND id_bailleur=:id_bailleur";
- 
+             . ($image ? ", image=:image" : "") .
+               " WHERE id_bien=:id_bien AND id_bailleur=:id_bailleur";
+
         $params = [
-            'titre'        => $_POST['titre'],
-            'adresse'      => $_POST['adresse'],
-            'type_bien'    => $_POST['type_bien'],
-            'surface'      => $_POST['surface'],
-            'nombre_pieces'=> $_POST['nombre_pieces'],
-            'prix'         => $_POST['prix'],
-            'statut'       => $_POST['statut'],
-            'description'  => $_POST['description'],
-            'id_bien'      => $_POST['id_bien'],
-            'id_bailleur'  => $id_bailleur
+            'titre'         => $_POST['titre'],
+            'adresse'       => $_POST['adresse'],
+            'type_bien'     => $_POST['type_bien'],
+            'surface'       => $_POST['surface'],
+            'nombre_pieces' => $_POST['nombre_pieces'],
+            'prix'          => $_POST['prix'],
+            'statut'        => $_POST['statut'],
+            'description'   => $_POST['description'],
+            'id_bien'       => $_POST['id_bien'],
+            'id_bailleur'   => $id_bailleur,
         ];
         if ($image) $params['image'] = $image;
         $conn->prepare($sql)->execute($params);
- 
+
     } else {
-     /* INSERT */
-/* INSERT */
-$sql = "INSERT INTO biens (
-            id_bailleur,
-            image,
-            titre,
-            adresse,
-            type_bien,
-            surface,
-            nombre_pieces,
-            prix,
-            statut,
-            description
-        ) VALUES (
-            :id_bailleur,
-            :image,
-            :titre,
-            :adresse,
-            :type_bien,
-            :surface,
-            :nombre_pieces,
-            :prix,
-            :statut,
-            :description
-        )";
+        /* ── INSERT ── */
+        $sql = "INSERT INTO biens
+                    (id_bailleur, image, titre, adresse, type_bien, surface, nombre_pieces, prix, statut, description)
+                VALUES
+                    (:id_bailleur, :image, :titre, :adresse, :type_bien, :surface, :nombre_pieces, :prix, :statut, :description)";
 
-$stmt = $conn->prepare($sql);
-
-$stmt->execute([
-    ':id_bailleur'   => $id_bailleur,
-    ':image'         => $image ?? '',
-    ':titre'         => $_POST['titre'] ?? '',
-    ':adresse'       => $_POST['adresse'] ?? '',
-    ':type_bien'     => $_POST['type_bien'] ?? '',
-    ':surface'       => $_POST['surface'] ?? null,
-    ':nombre_pieces' => $_POST['nombre_pieces'] ?? null,
-    ':prix'          => $_POST['prix'] ?? 0,
-    ':statut'        => $_POST['statut'] ?? 'Disponible',
-    ':description'   => $_POST['description'] ?? ''
-]);
+        $conn->prepare($sql)->execute([
+            'id_bailleur'   => $id_bailleur,
+            'image'         => $image ?? '',
+            'titre'         => $_POST['titre']         ?? '',
+            'adresse'       => $_POST['adresse']        ?? '',
+            'type_bien'     => $_POST['type_bien']      ?? '',
+            'surface'       => $_POST['surface']        ?? null,
+            'nombre_pieces' => $_POST['nombre_pieces']  ?? null,
+            'prix'          => $_POST['prix']           ?? 0,
+            'statut'        => $_POST['statut']         ?? 'Disponible',
+            'description'   => $_POST['description']    ?? '',
+        ]);
     }
- 
-    header("Location: bien.php"); exit;
+
+    header("Location: bien.php");
+    exit;
 }
- 
+
 /* =========================
    LISTE BIENS
 ========================= */
-$stmt = $conn->prepare("SELECT * FROM biens WHERE id_bailleur=:id_bailleur ORDER BY id_bien DESC");
-$stmt->execute(['id_bailleur' => $id_bailleur]);
+$stmt = $conn->prepare("SELECT * FROM biens WHERE id_bailleur=:b ORDER BY id_bien DESC");
+$stmt->execute(['b' => $id_bailleur]);
 $biens = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -143,430 +149,546 @@ $biens = $stmt->fetchAll(PDO::FETCH_ASSOC);
             --radius-lg: 16px;
             --radius-md: 12px;
             --radius-sm: 8px;
-            --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.05);
-            --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
-            
-            --success-bg: #f0fdf4;
-            --success-text: #166534;
-            --success-dot: #22c55e;
-            --danger-bg: #fef2f2;
-            --danger-text: #991b1b;
-            --danger-dot: #ef4444;
-            --warning-bg: #fffbeb;
-            --warning-text: #92400e;
-            --warning-dot: #f59e0b;
+            --shadow-sm: 0 4px 6px -1px rgba(15,23,42,0.05);
+            --shadow-md: 0 10px 15px -3px rgba(15,23,42,0.08);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        body { background: var(--bg-app); color: var(--text-main); min-height: 100vh; }
-        .container { display: flex; }
-         
-        /* SIDEBAR HARMONISÉE */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+        body { background:var(--bg-app); color:var(--text-main); min-height:100vh; }
+        .container { display:flex; }
+
+        /* ── SIDEBAR ── */
         .sidebar {
-            width: 260px; background: var(--primary); color: white;
-            height: 100vh; position: fixed;
-            display: flex; flex-direction: column;
-            padding: 24px 16px; transition: 0.3s ease; z-index: 1000;
-            box-shadow: 4px 0 24px rgba(30, 64, 175, 0.08);
+            width:260px; background:var(--primary); color:#fff;
+            height:100vh; position:fixed;
+            display:flex; flex-direction:column;
+            padding:28px 16px; z-index:100;
         }
-        .sidebar .logo {
-            display: flex; align-items: center; gap: 12px;
-            padding-bottom: 24px; margin-bottom: 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .sidebar .logo img {
-            width: 40px; height: 40px; border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.2); object-fit: cover;
-        }
-        .sidebar h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
-        .sidebar nav { display: flex; flex-direction: column; gap: 6px; }
+        .sidebar .brand { display:flex; align-items:center; gap:12px; margin-bottom:36px; }
+        .sidebar .brand i { background:rgba(255,255,255,0.15); padding:10px; border-radius:10px; font-size:18px; }
+        .sidebar .brand span { font-size:20px; font-weight:700; }
+        .sidebar nav { display:flex; flex-direction:column; gap:4px; }
         .sidebar nav a {
-            display: flex; align-items: center; gap: 12px;
-            color: rgba(255, 255, 255, 0.75); text-decoration: none;
-            padding: 12px 16px; border-radius: var(--radius-sm);
-            font-size: 14px; font-weight: 500; transition: all 0.2s ease;
+            display:flex; align-items:center; gap:12px;
+            padding:12px 16px; border-radius:var(--radius-sm);
+            color:rgba(255,255,255,0.75); text-decoration:none;
+            font-size:14px; font-weight:500; transition:.2s;
         }
-        .sidebar nav a i { width: 18px; font-size: 16px; }
-        .sidebar nav a.active, .sidebar nav a:hover {
-            background: rgba(255, 255, 255, 0.15); color: white; font-weight: 600;
+        .sidebar nav a:hover, .sidebar nav a.active {
+            background:rgba(255,255,255,0.15); color:#fff; font-weight:600;
         }
-         
-        /* MOBILE MENU BUTTON */
-        .btn-menu-mobile {
-            display: none; background: var(--primary); color: white;
-            border: none; width: 42px; height: 42px; border-radius: var(--radius-sm);
-            cursor: pointer; font-size: 18px;
-            position: fixed; top: 16px; left: 16px; z-index: 2000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-         
-        /* ESPACE PRINCIPAL */
-        .main-content { margin-left: 260px; padding: 40px; flex: 1; max-width: calc(100% - 260px); }
-        .page-header { margin-bottom: 32px; }
-        .page-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
-        .page-header p { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
-         
-        /* ZONE COMMANDE SUPÉRIEURE */
-        .actions-top { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; }
+        .sidebar nav a.logout { margin-top:40px; color:#fca5a5; }
+        .sidebar nav a.logout:hover { background:rgba(239,68,68,0.15); }
+
+        /* ── MAIN ── */
+        .main-content { margin-left:260px; padding:40px; flex:1; max-width:calc(100% - 260px); }
+        .page-header { margin-bottom:32px; }
+        .page-header h1 { font-size:26px; font-weight:700; letter-spacing:-0.02em; margin-bottom:6px; }
+        .page-header p { color:var(--text-muted); font-size:14px; }
+
+        /* ── ACTIONS TOP ── */
+        .actions-top { display:flex; gap:12px; margin-bottom:28px; align-items:center; }
         .actions-top input[type="text"] {
-            flex: 1; padding: 12px 16px; border-radius: var(--radius-md);
-            border: 1px solid var(--border-color); outline: none; font-size: 14px;
-            transition: all 0.2s ease; background: var(--surface);
+            flex:1; padding:12px 18px; border-radius:30px;
+            border:1px solid var(--border-color); outline:none; font-size:14px;
+            background:var(--surface); transition:.2s;
         }
-        .actions-top input[type="text"]:focus { border-color: var(--primary-light); box-shadow: var(--shadow-sm); }
+        .actions-top input:focus { border-color:var(--primary-light); box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
 
         .btn-primary {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 12px 24px; border-radius: var(--radius-md);
-            background: var(--primary); color: white; border: none;
-            font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap;
-            transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+            display:inline-flex; align-items:center; gap:8px;
+            padding:12px 22px; border-radius:var(--radius-sm);
+            background:var(--primary); color:#fff; border:none;
+            font-weight:600; font-size:14px; cursor:pointer; white-space:nowrap;
+            box-shadow:0 4px 12px rgba(30,64,175,0.2); transition:.2s;
         }
-        .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
-         
-        /* TABLEAU DU CONTENU */
-        .table-container {
-            background: var(--surface); border-radius: var(--radius-lg);
-            border: 1px solid var(--border-color); box-shadow: var(--shadow-md);
-            overflow: hidden;
+        .btn-primary:hover { background:var(--primary-light); transform:translateY(-1px); }
+
+        /* ── GRILLE ── */
+        .biens-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+            gap:24px;
         }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th {
-            background: #f8fafc; color: var(--text-muted);
-            font-weight: 600; font-size: 13px; text-transform: uppercase;
-            letter-spacing: 0.03em; padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+
+        .bien-card {
+            background:var(--surface); border-radius:var(--radius-lg);
+            border:1px solid var(--border-color); box-shadow:var(--shadow-sm);
+            overflow:hidden; display:flex; flex-direction:column;
+            transition:transform .2s, box-shadow .2s;
         }
-        td { padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background: #fafcff; }
-        .identite { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 2px solid #e0e7ff; }
-         
-        /* BADGES REVISITÉS */
-        .badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 4px 12px; border-radius: 20px;
-            font-size: 12px; font-weight: 600;
+        .bien-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-md); }
+
+        /* ── IMAGE ── */
+        .bien-image-wrapper {
+            position:relative; height:200px; overflow:hidden;
+            background:linear-gradient(135deg,#e0e7ff,#c7d2fe);
         }
-        .badge::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
-        
-        .badge-disponible { background: var(--success-bg); color: var(--success-text); }
-        .badge-disponible::before { background: var(--success-dot); }
-        
-        .badge-loue { background: var(--danger-bg); color: var(--danger-text); }
-        .badge-loue::before { background: var(--danger-dot); }
-        
-        .badge-maintenance { background: var(--warning-bg); color: var(--warning-text); }
-        .badge-maintenance::before { background: var(--warning-dot); }
-         
-        /* ENSEMBLE BOUTONS D'ACTION */
-        .actions-cell { display: flex; gap: 8px; }
-        .action-btn {
-            width: 32px; height: 32px; border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid var(--border-color); background: var(--surface);
-            color: var(--text-muted); cursor: pointer; transition: all 0.2s;
-            text-decoration: none;
+        .bien-image-wrapper img {
+            width:100%; height:100%; object-fit:cover;
+            transition:transform .3s ease;
         }
-        .action-btn.edit:hover { border-color: var(--primary-light); color: var(--primary-light); background: var(--primary-soft); }
-        .action-btn.delete:hover { border-color: #fca5a5; color: #ef4444; background: #fef2f2; }
-         
-        /* EMPTY STATE */
-        .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
-        .empty-state i { font-size: 48px; margin-bottom: 16px; color: #cbd5e1; display: block; }
-        .empty-state p { font-size: 15px; font-weight: 500; }
-         
-        /* OVERLAY MODAL FLOU */
-        .form-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px);
-            z-index: 3000; align-items: center; justify-content: center; padding: 20px;
+        .bien-card:hover .bien-image-wrapper img { transform:scale(1.04); }
+        .bien-image-placeholder {
+            width:100%; height:100%;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            color:var(--primary); gap:8px;
         }
-        .form-overlay.show { display: flex; }
-         
-        /* STRUCTURE DU FORMULAIRE FENETRE */
+        .bien-image-placeholder i { font-size:36px; opacity:.5; }
+        .bien-image-placeholder span { font-size:12px; font-weight:500; opacity:.6; }
+
+        /* ── BADGE STATUT ── */
+        .statut-badge {
+            position:absolute; top:12px; right:12px;
+            padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600;
+            display:inline-flex; align-items:center; gap:5px;
+            backdrop-filter:blur(4px);
+        }
+        .statut-badge::before { content:''; width:6px; height:6px; border-radius:50%; display:inline-block; }
+        .badge-disponible { background:rgba(240,253,244,0.95); color:#166534; }
+        .badge-disponible::before { background:#22c55e; }
+        .badge-loue { background:rgba(254,242,242,0.95); color:#991b1b; }
+        .badge-loue::before { background:#ef4444; }
+        .badge-maintenance { background:rgba(255,251,235,0.95); color:#92400e; }
+        .badge-maintenance::before { background:#f59e0b; }
+
+        /* ── INFOS CARTE ── */
+        .bien-info { padding:20px; flex:1; display:flex; flex-direction:column; }
+        .bien-info h3 { font-size:17px; font-weight:700; margin-bottom:6px; line-height:1.3; }
+        .bien-adresse { font-size:13px; color:var(--text-muted); display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+        .bien-prix { font-size:22px; font-weight:700; color:var(--primary); margin-bottom:14px; }
+        .bien-prix span { font-size:13px; font-weight:500; color:var(--text-muted); }
+
+        .bien-details-mini {
+            display:flex; gap:16px; border-top:1px solid var(--border-color);
+            padding-top:12px; margin-top:auto;
+        }
+        .bien-details-mini span { font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:5px; }
+
+        /* ── ACTIONS CARTE ── */
+        .bien-actions {
+            display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px;
+            padding:14px 18px; background:#f8fafc; border-top:1px solid var(--border-color);
+        }
+        .btn-action {
+            display:inline-flex; align-items:center; justify-content:center; gap:6px;
+            padding:9px 12px; font-size:13px; font-weight:600; border-radius:var(--radius-sm);
+            cursor:pointer; text-decoration:none; transition:.2s; border:1px solid transparent;
+        }
+        .btn-action.view { background:var(--primary-soft); color:var(--primary); }
+        .btn-action.view:hover { background:var(--primary); color:#fff; }
+        .btn-action.edit { background:#fff; border-color:var(--border-color); color:var(--text-muted); }
+        .btn-action.edit:hover { border-color:var(--primary-light); color:var(--primary-light); background:var(--primary-soft); }
+        .btn-action.delete { background:#fff; border-color:var(--border-color); color:#ef4444; }
+        .btn-action.delete:hover { background:#fef2f2; border-color:#fca5a5; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); grid-column:1/-1; }
+        .empty-state i { font-size:52px; color:#cbd5e1; display:block; margin-bottom:16px; }
+
+        /* ── OVERLAY / MODAL ── */
+        .overlay {
+            display:none; position:fixed; inset:0;
+            background:rgba(15,23,42,0.45); backdrop-filter:blur(4px);
+            z-index:2000; align-items:center; justify-content:center; padding:20px;
+        }
+        .overlay.show { display:flex; }
+
         .form-modal {
-            background: var(--surface); border-radius: var(--radius-lg);
-            width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid var(--border-color); animation: slideUp 0.25s ease;
+            background:var(--surface); border-radius:var(--radius-lg);
+            width:100%; max-width:560px; max-height:90vh; overflow-y:auto;
+            box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);
+            animation:popIn .22s ease;
         }
-        @keyframes slideUp {
-            from { transform: translateY(15px); opacity: 0; }
-            to   { transform: translateY(0);    opacity: 1; }
+        @keyframes popIn {
+            from { transform:scale(.96); opacity:0; }
+            to   { transform:scale(1);   opacity:1; }
         }
-        .modal-header { padding: 24px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h2 { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .modal-header {
+            padding:24px 28px; border-bottom:1px solid var(--border-color);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .modal-header h2 { font-size:17px; font-weight:700; }
+        .modal-header .close-btn { background:none; border:none; font-size:18px; color:var(--text-muted); cursor:pointer; }
 
-        .modal-body { padding: 30px; display: flex; flex-direction: column; gap: 16px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .modal-body { padding:26px 28px; display:flex; flex-direction:column; gap:16px; }
+        .form-group { display:flex; flex-direction:column; gap:6px; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .form-group label { font-size:13px; font-weight:600; }
+        .form-group input, .form-group select, .form-group textarea {
+            padding:10px 14px; border-radius:var(--radius-sm);
+            border:1px solid var(--border-color); outline:none;
+            font-size:14px; background:#f8fafc; transition:.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color:var(--primary-light); background:#fff;
+            box-shadow:0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .form-group textarea { resize:vertical; min-height:80px; }
 
-        .form-modal label { font-size: 13px; font-weight: 600; color: var(--text-main); }
-        .form-modal input, .form-modal select, .form-modal textarea {
-            padding: 10px 14px; border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color); outline: none;
-            font-size: 14px; background: #f8fafc; transition: all 0.2s;
+        /* Aperçu image dans le formulaire */
+        .img-preview-wrap { position:relative; margin-top:6px; }
+        #imgPreview {
+            display:none; width:100%; height:160px; object-fit:cover;
+            border-radius:var(--radius-sm); border:1px solid var(--border-color);
         }
-        .form-modal input:focus, .form-modal select:focus, .form-modal textarea:focus {
-            border-color: var(--primary-light); background: var(--surface);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+
+        .btn-group { display:flex; justify-content:flex-end; gap:10px; padding-top:16px; border-top:1px solid var(--border-color); }
+        .btn-save { padding:11px 24px; border-radius:var(--radius-sm); border:none; background:var(--primary); color:#fff; font-weight:600; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
+        .btn-save:hover { background:var(--primary-light); }
+        .btn-cancel { padding:11px 18px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-muted); font-weight:600; font-size:14px; cursor:pointer; }
+
+        /* Modal détail */
+        .detail-image {
+            width:100%; height:220px; object-fit:cover;
+            border-radius:var(--radius-md); margin-bottom:16px;
+            border:1px solid var(--border-color);
         }
-        .form-modal textarea { resize: vertical; min-height: 80px; }
-         
-        /* ZONE DE BOUTONS INFERIEURE */
-        .btn-group { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 20px; }
-        .btn-group button { padding: 11px 20px; border-radius: var(--radius-sm); font-weight: 600; font-size: 14px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-save { background: var(--primary); color: white; }
-        .btn-save:hover { background: var(--primary-light); }
-        .btn-cancel { background: #f1f5f9; color: var(--text-muted); }
-        .btn-cancel:hover { background: #e2e8f0; }
-         
-        /* PIED DE PAGE */
-        footer {
-            text-align: center; padding: 24px;
-            background: #f1f5f9; margin-top: 40px; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border-color);
+        .detail-placeholder {
+            width:100%; height:160px; border-radius:var(--radius-md);
+            background:var(--primary-soft); display:flex; align-items:center; justify-content:center;
+            color:var(--primary); font-size:32px; margin-bottom:16px;
         }
-        footer a { color: var(--primary); text-decoration: none; font-weight: 500; }
-        footer a:hover { text-decoration: underline; }
-         
-        /* RESPONSIVE FLUIDE */
-        @media(max-width: 900px) {
-            .sidebar { left: -280px; width: 260px; }
-            .sidebar.show { left: 0; }
-            .main-content { margin-left: 0; padding: 80px 16px 24px; max-width: 100%; }
-            .btn-menu-mobile { display: flex; align-items: center; justify-content: center; }
-            .table-container { display: block; overflow-x: auto; white-space: nowrap; }
-            .actions-top { flex-direction: column; align-items: stretch; }
-            .form-row { grid-template-columns: 1fr; gap: 16px; }
-            .btn-group { flex-direction: column-reverse; }
-            .btn-group button { justify-content: center; width: 100%; }
+        .info-list { display:flex; flex-direction:column; gap:10px; }
+        .info-row { display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px dashed var(--border-color); font-size:14px; }
+        .info-row span { color:var(--text-muted); }
+        .info-row strong { color:var(--text-main); }
+        .desc-box { padding:12px 14px; background:#f8fafc; border-radius:var(--radius-sm); border:1px solid var(--border-color); font-size:13px; line-height:1.6; white-space:pre-line; margin-top:4px; }
+
+        /* ── FOOTER ── */
+        footer { text-align:center; padding:24px; background:#f1f5f9; margin-top:40px; font-size:13px; color:var(--text-muted); border-top:1px solid var(--border-color); }
+        footer a { color:var(--primary); text-decoration:none; font-weight:500; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width:900px) {
+            .sidebar { display:none; }
+            .main-content { margin-left:0; padding:20px; max-width:100%; }
+            .form-row { grid-template-columns:1fr; }
         }
     </style>
 </head>
 <body>
- 
-<button id="menuToggle" class="btn-menu-mobile"><i class="fas fa-bars"></i></button>
- 
+
 <div class="container">
- 
-<aside class="sidebar" id="appSidebar">
-  <div class="logo">
-    <img src="../../../public/assets/images/logo.png" alt="Logo RentMaster">
-    <h2>RentMaster</h2>
-  </div>
-  <nav>
-    <a href="dashboard.php"><i class="fa fa-home"></i> Dashboard</a>
-    <a href="bien.php" class="active"><i class="fa fa-building"></i> Biens</a>
-    <a href="locataire.php"><i class="fa fa-users"></i> Locataires</a>
-    <a href="contrat.php"><i class="fa fa-file-contract"></i> Contrats</a>
-    <a href="paiement.php"><i class="fa fa-credit-card"></i> Paiements</a>
-  </nav>
-</aside>
- 
-<main class="main-content">
-  <div class="page-header">
-    <h1><i class="fa fa-building"></i> Gestion des Biens</h1>
-    <p>Ajoutez, modifiez ou supprimez vos biens immobiliers. Le statut se met à jour automatiquement selon les contrats.</p>
-  </div>
- 
-  <div class="actions-top">
-    <input type="text" id="searchInput" placeholder="Rechercher par nom, adresse, statut..." onkeyup="filtrerBiens()">
-    <button class="btn-primary" onclick="openForm()">
-      <i class="fa fa-plus"></i> Ajouter un bien
-    </button>
-  </div>
- 
-  <div class="table-container">
-      <table id="tableBiens">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Image</th>
-            <th>Titre</th>
-            <th>Adresse</th>
-            <th>Type</th>
-            <th>Surface</th>
-            <th>Pièces</th>
-            <th>Loyer</th>
-            <th>Statut</th>
-            <th style="text-align: center;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if(empty($biens)): ?>
-          <tr><td colspan="10">
-            <div class="empty-state">
-              <i class="fa-regular fa-folder-open"></i>
-              <p>Aucun bien enregistré dans votre espace. Ajoutez votre premier bien !</p>
-            </div>
-          </td></tr>
-          <?php else: ?>
-          <?php foreach($biens as $b): ?>
-          <tr>
-            <td><span style="font-weight: 600; color: var(--text-muted);">#<?= $b['id_bien'] ?></span></td>
-            <td>
-              <?php if(!empty($b['image'])): ?>
-                <img src="../../public/uploads/<?= htmlspecialchars($b['image']) ?>" class="identite" alt="<?= htmlspecialchars($b['titre']) ?>">
-              <?php else: ?>
-                <div style="width:44px;height:44px;border-radius:10px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary);">
-                  <i class="fa fa-building"></i>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-building"></i>
+            <span>RentMaster</span>
+        </div>
+        <nav>
+            <a href="dashboard.php"><i class="fa fa-chart-line"></i> Dashboard</a>
+            <a href="bien.php" class="active"><i class="fa fa-building"></i> Biens</a>
+            <a href="locataire.php"><i class="fa fa-users"></i> Locataires</a>
+            <a href="contrat.php"><i class="fa fa-file-contract"></i> Contrats</a>
+            <a href="paiement.php"><i class="fa fa-credit-card"></i> Paiements</a>
+        </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <div class="page-header">
+            <h1><i class="fa fa-building" style="color:var(--primary);margin-right:8px;"></i>Gestion des Biens</h1>
+            <p>Ajoutez, modifiez ou supprimez vos biens immobiliers.</p>
+        </div>
+
+        <div class="actions-top">
+            <input type="text" id="searchInput" placeholder="🔍  Rechercher par titre, adresse, type..." onkeyup="filtrer()">
+            <button class="btn-primary" onclick="ouvrirForm()">
+                <i class="fa fa-plus"></i> Ajouter un bien
+            </button>
+        </div>
+
+        <div class="biens-grid" id="biensGrid">
+            <?php if (empty($biens)): ?>
+                <div class="empty-state">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <p>Aucun bien enregistré. Ajoutez votre premier bien !</p>
                 </div>
-              <?php endif; ?>
-            </td>
-            <td><strong style="color: var(--text-main);"><?= htmlspecialchars($b['titre'] ?? '') ?></strong></td>
-            <td><?= htmlspecialchars($b['adresse'] ?? '') ?></td>
-            <td><?= htmlspecialchars($b['type_bien'] ?? '') ?></td>
-            <td><?= $b['surface'] ?? '—' ?> m²</td>
-            <td><?= $b['nombre_pieces'] ?? '—' ?></td>
-            <td><strong style="color: var(--text-main);"><?= number_format($b['prix'] ?? 0, 2) ?> $</strong></td>
-            <td>
-              <?php
-                $s = $b['statut'] ?? '';
-                $cls = match($s) {
-                  'Loué'        => 'badge-loue',
-                  'Maintenance' => 'badge-maintenance',
-                  default       => 'badge-disponible'
-                };
-              ?>
-              <span class="badge <?= $cls ?>"><?= htmlspecialchars($s) ?></span>
-            </td>
-            <td>
-              <div class="actions-cell">
-                  <a href="bien.php?edit=<?= $b['id_bien'] ?>" class="action-btn edit" title="Modifier">
-                    <i class="fa fa-edit"></i>
-                  </a>
-                  <a href="bien.php?delete=<?= $b['id_bien'] ?>" class="action-btn delete" title="Supprimer" onclick="return confirm('Supprimer ce bien définitivement ?')">
-                    <i class="fa fa-trash"></i>
-                  </a>
-              </div>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-          <?php endif; ?>
-        </tbody>
-      </table>
-  </div>
-</main>
-</div>
- 
-<div id="formOverlay" class="form-overlay <?= $editMode ? 'show' : '' ?>">
-  <div class="form-modal">
-    <div class="modal-header">
-        <h2 id="formTitle">
-          <?= $editMode ? '<i class="fa fa-edit"></i> Modifier les spécifications du bien' : '<i class="fa fa-plus"></i> Enregistrer un nouveau bien' ?>
-        </h2>
-    </div>
- 
-    <form method="POST" enctype="multipart/form-data">
-      <div class="modal-body">
-          <?php if($editMode && $bienEdit): ?>
-            <input type="hidden" name="id_bien" value="<?= $bienEdit['id_bien'] ?>">
-          <?php endif; ?>
-     
-          <div class="form-group">
-              <label>Image de présentation</label>
-              <input type="file" name="image" accept="image/*">
-          </div>
-     
-          <div class="form-group">
-              <label>Titre descriptif *</label>
-              <input type="text" name="titre" value="<?= htmlspecialchars($bienEdit['titre'] ?? '') ?>" required placeholder="Ex: Appartement T3 Centre-ville">
-          </div>
-     
-          <div class="form-group">
-              <label>Adresse physique *</label>
-              <input type="text" name="adresse" value="<?= htmlspecialchars($bienEdit['adresse'] ?? '') ?>" required placeholder="Ex: 12 rue de la Paix, Kinshasa">
-          </div>
-     
-          <div class="form-row">
-              <div class="form-group">
-                  <label>Type de bien</label>
-                  <select name="type_bien">
-                    <?php foreach(['Appartement','Maison','Studio','Bureau'] as $t): ?>
-                      <option <?= ($bienEdit['type_bien'] ?? '') == $t ? 'selected' : '' ?>><?= $t ?></option>
-                    <?php endforeach; ?>
-                  </select>
-              </div>
-              <div class="form-group">
-                  <label>Loyer mensuel ($) *</label>
-                  <input type="number" name="prix" value="<?= $bienEdit['prix'] ?? '' ?>" required placeholder="Ex: 800" min="0" step="0.01">
-              </div>
-          </div>
-     
-          <div class="form-row">
-              <div class="form-group">
-                  <label>Surface habitable (m²)</label>
-                  <input type="number" name="surface" value="<?= $bienEdit['surface'] ?? '' ?>" placeholder="Ex: 65" min="1">
-              </div>
-              <div class="form-group">
-                  <label>Nombre de pièces</label>
-                  <input type="number" name="nombre_pieces" value="<?= $bienEdit['nombre_pieces'] ?? '' ?>" placeholder="Ex: 3" min="1">
-              </div>
-          </div>
-     
-          <div class="form-group">
-              <label>Statut initial</label>
-              <select name="statut">
-                <?php foreach(['Disponible','Loué','Maintenance'] as $s): ?>
-                  <option <?= ($bienEdit['statut'] ?? 'Disponible') == $s ? 'selected' : '' ?>><?= $s ?></option>
+            <?php else: ?>
+                <?php foreach ($biens as $b):
+                    $statut = $b['statut'] ?? 'Disponible';
+                    $cls = match($statut) {
+                        'Loué'        => 'badge-loue',
+                        'Maintenance' => 'badge-maintenance',
+                        default       => 'badge-disponible',
+                    };
+                    // ✅ Chemin correct depuis views/bailleur/ → public/uploads/
+                    $imgSrc = !empty($b['image'])
+                        ? '../../../public/uploads/' . htmlspecialchars($b['image'])
+                        : null;
+                ?>
+                <div class="bien-card" data-search="<?= strtolower(htmlspecialchars($b['titre'].' '.$b['adresse'].' '.$b['type_bien'])) ?>">
+
+                    <div class="bien-image-wrapper">
+                        <span class="statut-badge <?= $cls ?>"><?= htmlspecialchars($statut) ?></span>
+
+                        <?php if ($imgSrc): ?>
+                            <img src="<?= $imgSrc ?>"
+                                 alt="<?= htmlspecialchars($b['titre']) ?>"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="bien-image-placeholder" style="display:none;">
+                                <i class="fa fa-building"></i>
+                                <span>Image introuvable</span>
+                            </div>
+                        <?php else: ?>
+                            <div class="bien-image-placeholder">
+                                <i class="fa fa-building"></i>
+                                <span>Aucune image</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="bien-info">
+                        <h3><?= htmlspecialchars($b['titre']) ?></h3>
+                        <div class="bien-adresse">
+                            <i class="fa fa-location-dot"></i>
+                            <?= htmlspecialchars($b['adresse']) ?>
+                        </div>
+                        <div class="bien-prix">
+                            <?= number_format((float)$b['prix'], 2) ?> $
+                            <span>/ mois</span>
+                        </div>
+                        <div class="bien-details-mini">
+                            <span><i class="fa fa-vector-square"></i> <?= $b['surface'] ?? '—' ?> m²</span>
+                            <span><i class="fa fa-door-open"></i> <?= $b['nombre_pieces'] ?? '—' ?> pcs</span>
+                            <span><i class="fa fa-layer-group"></i> <?= htmlspecialchars($b['type_bien'] ?? '') ?></span>
+                        </div>
+                    </div>
+
+                    <div class="bien-actions">
+                        <button class="btn-action view" onclick='ouvrirDetail(<?= json_encode($b) ?>)'>
+                            <i class="fa fa-eye"></i> Voir plus
+                        </button>
+                        <a href="bien.php?edit=<?= $b['id_bien'] ?>" class="btn-action edit" title="Modifier">
+                            <i class="fa fa-pen"></i>
+                        </a>
+                        <a href="bien.php?delete=<?= $b['id_bien'] ?>" class="btn-action delete" title="Supprimer"
+                           onclick="return confirm('Supprimer ce bien définitivement ?')">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
                 <?php endforeach; ?>
-              </select>
-          </div>
-     
-          <div class="form-group">
-              <label>Description complémentaire</label>
-              <textarea name="description" placeholder="Équipements, commodités ou spécificités du logement..."><?= htmlspecialchars($bienEdit['description'] ?? '') ?></textarea>
-          </div>
-     
-          <div class="btn-group">
-            <button type="button" class="btn-cancel" onclick="closeForm()">
-              <i class="fa fa-times"></i> Annuler
-            </button>
-            <button type="submit" class="btn-save">
-              <i class="fa fa-check"></i> <?= $editMode ? 'Appliquer les modifications' : 'Enregistrer le bien' ?>
-            </button>
-          </div>
-      </div>
-    </form>
-  </div>
+            <?php endif; ?>
+        </div>
+
+    </main>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY 1 — FORMULAIRE AJOUT / MODIF
+══════════════════════════════════════ -->
+<div class="overlay <?= $editMode ? 'show' : '' ?>" id="overlayForm">
+    <div class="form-modal">
+        <div class="modal-header">
+            <h2 id="formTitre">
+                <?= $editMode
+                    ? '<i class="fa fa-pen"></i> Modifier le bien'
+                    : '<i class="fa fa-plus"></i> Ajouter un bien' ?>
+            </h2>
+            <button class="close-btn" onclick="fermerForm()"><i class="fa fa-times"></i></button>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="modal-body">
+                <?php if ($editMode && $bienEdit): ?>
+                    <input type="hidden" name="id_bien" value="<?= $bienEdit['id_bien'] ?>">
+                <?php endif; ?>
+
+                <!-- Image + aperçu -->
+                <div class="form-group">
+                    <label>Image du bien (JPG, PNG, WEBP — max 5 Mo)</label>
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp"
+                           onchange="previewImage(this)">
+                    <div class="img-preview-wrap">
+                        <?php if ($editMode && !empty($bienEdit['image'])): ?>
+                            <img id="imgPreview"
+                                 src="../../../public/uploads/<?= htmlspecialchars($bienEdit['image']) ?>"
+                                 style="display:block;">
+                        <?php else: ?>
+                            <img id="imgPreview">
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Titre *</label>
+                    <input type="text" name="titre" required placeholder="Ex: Appartement T3 Centre-ville"
+                           value="<?= htmlspecialchars($bienEdit['titre'] ?? '') ?>">
+                </div>
+
+                <div class="form-group">
+                    <label>Adresse *</label>
+                    <input type="text" name="adresse" required placeholder="Ex: 12 avenue Kasa-Vubu, Kinshasa"
+                           value="<?= htmlspecialchars($bienEdit['adresse'] ?? '') ?>">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type de bien</label>
+                        <select name="type_bien">
+                            <?php foreach (['Appartement','Maison','Studio','Bureau','Villa'] as $t): ?>
+                                <option <?= ($bienEdit['type_bien'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Loyer mensuel ($) *</label>
+                        <input type="number" name="prix" required min="0" step="0.01"
+                               placeholder="Ex: 800"
+                               value="<?= htmlspecialchars($bienEdit['prix'] ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Surface (m²)</label>
+                        <input type="number" name="surface" min="1" placeholder="Ex: 65"
+                               value="<?= htmlspecialchars($bienEdit['surface'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre de pièces</label>
+                        <input type="number" name="nombre_pieces" min="1" placeholder="Ex: 3"
+                               value="<?= htmlspecialchars($bienEdit['nombre_pieces'] ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Statut</label>
+                    <select name="statut">
+                        <?php foreach (['Disponible','Loué','Maintenance'] as $s): ?>
+                            <option <?= ($bienEdit['statut'] ?? 'Disponible') === $s ? 'selected' : '' ?>><?= $s ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" placeholder="Équipements, commodités..."><?= htmlspecialchars($bienEdit['description'] ?? '') ?></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-cancel" onclick="fermerForm()">Annuler</button>
+                    <button type="submit" class="btn-save">
+                        <i class="fa fa-save"></i>
+                        <?= $editMode ? 'Enregistrer les modifications' : 'Ajouter le bien' ?>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY 2 — DÉTAIL DU BIEN
+══════════════════════════════════════ -->
+<div class="overlay" id="overlayDetail">
+    <div class="form-modal">
+        <div class="modal-header">
+            <h2 id="detailTitre"><i class="fa fa-building"></i> Détails</h2>
+            <button class="close-btn" onclick="fermerDetail()"><i class="fa fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="detailImg"></div>
+            <div class="info-list">
+                <div class="info-row"><span>Type</span><strong id="dType"></strong></div>
+                <div class="info-row"><span>Adresse</span><strong id="dAdresse"></strong></div>
+                <div class="info-row"><span>Surface</span><strong id="dSurface"></strong></div>
+                <div class="info-row"><span>Pièces</span><strong id="dPieces"></strong></div>
+                <div class="info-row"><span>Loyer mensuel</span><strong id="dPrix"></strong></div>
+                <div class="info-row"><span>Statut</span><strong id="dStatut"></strong></div>
+            </div>
+            <div class="form-group" style="margin-top:12px;">
+                <label>Description</label>
+                <div class="desc-box" id="dDesc"></div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="fermerDetail()"><i class="fa fa-times"></i> Fermer</button>
+                <a id="dEditLink" href="#" class="btn-save" style="text-decoration:none;">
+                    <i class="fa fa-pen"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <footer>
-  <p>&copy; 2026 RentMaster. Interface d'administration foncière. | 
-    <a href="mailto:divinekatende23@gmail.com">Support client</a> | 
-    <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Portfolio Développeur</a>
-  </p>
+    <p>&copy; 2026 RentMaster. Tous droits réservés. |
+        <a href="mailto:divinekatende23@gmail.com">Support</a> |
+        <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Portfolio</a>
+    </p>
 </footer>
- 
+
 <script>
-function openForm() {
-    document.getElementById('formOverlay').classList.add('show');
-}
-function closeForm() {
-    <?php if($editMode): ?>
-        window.location.href = 'bien.php';
-    <?php else: ?>
-        document.getElementById('formOverlay').classList.remove('show');
-    <?php endif; ?>
-}
- 
-document.getElementById('formOverlay').addEventListener('click', function(e) {
-    if (e.target === this) closeForm();
-});
- 
-document.getElementById("menuToggle").addEventListener("click", function() {
-    document.getElementById("appSidebar").classList.toggle("show");
-});
- 
-function filtrerBiens() {
-    var val = document.getElementById('searchInput').value.toLowerCase();
-    var rows = document.querySelectorAll('#tableBiens tbody tr');
-    rows.forEach(function(row) {
-        if(row.cells.length > 1) {
-            row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
-        }
+/* ── RECHERCHE ── */
+function filtrer() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.bien-card').forEach(c => {
+        c.style.display = c.dataset.search.includes(q) ? '' : 'none';
     });
 }
+
+/* ── APERÇU IMAGE dans le formulaire ── */
+function previewImage(input) {
+    const prev = document.getElementById('imgPreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+/* ── FORM OVERLAY ── */
+function ouvrirForm() {
+    document.getElementById('overlayForm').classList.add('show');
+}
+function fermerForm() {
+    <?php if ($editMode): ?>
+        window.location.href = 'bien.php';
+    <?php else: ?>
+        document.getElementById('overlayForm').classList.remove('show');
+    <?php endif; ?>
+}
+
+/* ── DETAIL OVERLAY ── */
+function ouvrirDetail(b) {
+    const imgBase = '../../../public/uploads/';
+    const imgEl   = document.getElementById('detailImg');
+
+    if (b.image) {
+        imgEl.innerHTML = `<img src="${imgBase}${b.image}" class="detail-image"
+            onerror="this.parentElement.innerHTML='<div class=\'detail-placeholder\'><i class=\'fa fa-building\'></i></div>'">`;
+    } else {
+        imgEl.innerHTML = `<div class="detail-placeholder"><i class="fa fa-building"></i></div>`;
+    }
+
+    document.getElementById('detailTitre').innerHTML = `<i class="fa fa-building"></i> ${b.titre}`;
+    document.getElementById('dType').textContent    = b.type_bien    || '—';
+    document.getElementById('dAdresse').textContent = b.adresse      || '—';
+    document.getElementById('dSurface').textContent = (b.surface     || '—') + ' m²';
+    document.getElementById('dPieces').textContent  = b.nombre_pieces || '—';
+    document.getElementById('dPrix').textContent    = parseFloat(b.prix || 0).toFixed(2) + ' $ / mois';
+    document.getElementById('dStatut').textContent  = b.statut       || '—';
+    document.getElementById('dDesc').textContent    = b.description  || 'Aucune description.';
+    document.getElementById('dEditLink').href       = `bien.php?edit=${b.id_bien}`;
+
+    document.getElementById('overlayDetail').classList.add('show');
+}
+function fermerDetail() {
+    document.getElementById('overlayDetail').classList.remove('show');
+}
+
+/* Fermer en cliquant hors du modal */
+['overlayForm','overlayDetail'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+        if (e.target === this) {
+            id === 'overlayForm' ? fermerForm() : fermerDetail();
+        }
+    });
+});
 </script>
 </body>
 </html>

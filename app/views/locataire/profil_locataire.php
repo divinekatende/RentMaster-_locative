@@ -11,6 +11,17 @@ if (!isset($_SESSION['id_locataire'])) {
 $id = $_SESSION['id_locataire'];
 $conn = (new Database())->connect();
 
+// Dossier de stockage physique sur le serveur
+$upload_dir = __DIR__ . '/../../public/uploads/locataires/';
+if (!is_dir($upload_dir)) {
+    mkdir($upload_dir, 0777, true);
+}
+
+// Détection automatique du dossier racine pour l'affichage HTML
+$project_root = str_replace($_SERVER['DOCUMENT_ROOT'], '', str_replace('\\', '/', __DIR__ . '/../../'));
+$project_root = rtrim($project_root, '/') . '/';
+$avatar_url_path = $project_root . 'public/uploads/locataires/';
+
 /* Récupération des infos réelles du locataire */
 $sql = "SELECT * FROM locataires WHERE id_locataire = :id";
 $stmt = $conn->prepare($sql);
@@ -21,6 +32,23 @@ if (!$locataire) {
     die("Erreur : Profil introuvable.");
 }
 
+/* Traitement de la suppression de la photo */
+if (isset($_POST['delete_photo'])) {
+    if (!empty($locataire['photo'])) {
+        $file_path = $upload_dir . $locataire['photo'];
+        if (file_exists($file_path)) {
+            unlink($file_path);
+        }
+        
+        $sql = "UPDATE locataires SET photo = NULL WHERE id_locataire = :id";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['id' => $id]);
+        
+        header("Location: profil_locataire.php?success=2");
+        exit;
+    }
+}
+
 /* Traitement de la mise à jour (Formulaire soumis) */
 if (isset($_POST['update'])) {
     $nom = trim($_POST['nom']);
@@ -28,69 +56,73 @@ if (isset($_POST['update'])) {
     $email = trim($_POST['email']);
     $current = $_POST['currentPassword'] ?? '';
     $new = $_POST['newPassword'] ?? '';
+    
+    $photo_filename = $locataire['photo']; // On garde l'ancienne photo par défaut
 
-    if (!empty($new)) {
-        // Validation du mot de passe actuel (gère le texte clair '1111' ET le hash bcrypt)
-        $password_valide = false;
-        if (password_verify($current, $locataire['mot_de_passe'])) {
-            $password_valide = true;
-        } elseif ($current === $locataire['mot_de_passe']) {
-            // Sécurité temporaire si le mot de passe en BDD n'est pas encore hashé
-            $password_valide = true;
-        }
-
-        if (!$password_valide) {
-            $error = "Le mot de passe actuel est incorrect.";
+    // Gestion de l'upload
+    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+        $file_tmp = $_FILES['photo']['tmp_name'];
+        $file_name = $_FILES['photo']['name'];
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp'];
+        
+        if (in_array($file_ext, $allowed_extensions)) {
+            // Supprimer l'ancienne photo physique si elle existe
+            if (!empty($locataire['photo']) && file_exists($upload_dir . $locataire['photo'])) {
+                unlink($upload_dir . $locataire['photo']);
+            }
+            
+            // Génération du nom unique
+            $photo_filename = 'loc_' . uniqid() . '.' . $file_ext;
+            move_uploaded_file($file_tmp, $upload_dir . $photo_filename);
         } else {
-            // On hashe le nouveau mot de passe proprement avant l'insertion
-            $new_hash = password_hash($new, PASSWORD_BCRYPT);
+            $error = "Format d'image invalide. Uniquement JPG, JPEG, PNG ou WEBP.";
+        }
+    }
 
+    if (!isset($error)) {
+        if (!empty($new)) {
+            $password_valide = false;
+            if (password_verify($current, $locataire['mot_de_passe'])) {
+                $password_valide = true;
+            } elseif ($current === $locataire['mot_de_passe']) {
+                $password_valide = true;
+            }
+
+            if (!$password_valide) {
+                $error = "Le mot de passe actuel est incorrect.";
+            } else {
+                $new_hash = password_hash($new, PASSWORD_BCRYPT);
+
+                $sql = "UPDATE locataires 
+                        SET nom = :nom, prenom = :prenom, email = :email, mot_de_passe = :mdp, photo = :photo, first_login = 1
+                        WHERE id_locataire = :id";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([
+                    'nom' => $nom, 'prenom' => $prenom, 'email' => $email, 'mdp' => $new_hash, 'photo' => $photo_filename, 'id' => $id
+                ]);
+
+                $_SESSION['nom'] = $nom;
+                $_SESSION['prenom'] = $prenom;
+                header("Location: dashboard_locataire.php");
+                exit;
+            }
+        } else {
+            // Mise à jour simple sans mot de passe
             $sql = "UPDATE locataires 
-                    SET nom = :nom,
-                        prenom = :prenom,
-                        email = :email,
-                        mot_de_passe = :mdp,
-                        first_login = 1
+                    SET nom = :nom, prenom = :prenom, email = :email, photo = :photo
                     WHERE id_locataire = :id";
-
             $stmt = $conn->prepare($sql);
             $stmt->execute([
-                'nom' => $nom,
-                'prenom' => $prenom,
-                'email' => $email,
-                'mdp' => $new_hash,
-                'id' => $id
+                'nom' => $nom, 'prenom' => $prenom, 'email' => $email, 'photo' => $photo_filename, 'id' => $id
             ]);
 
-            // Mettre à jour la session
             $_SESSION['nom'] = $nom;
             $_SESSION['prenom'] = $prenom;
-
-            header("Location: dashboard_locataire.php");
+            header("Location: profil_locataire.php?success=1");
             exit;
         }
-    } else {
-        // Mise à jour simple sans changement de mot de passe
-        $sql = "UPDATE locataires 
-                SET nom = :nom,
-                    prenom = :prenom,
-                    email = :email
-                WHERE id_locataire = :id";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            'nom' => $nom,
-            'prenom' => $prenom,
-            'email' => $email,
-            'id' => $id
-        ]);
-
-        // Mettre à jour la session
-        $_SESSION['nom'] = $nom;
-        $_SESSION['prenom'] = $prenom;
-
-        header("Location: profil_locataire.php?success=1");
-        exit;
     }
 }
 ?>
@@ -117,7 +149,6 @@ if (isset($_POST['update'])) {
             --radius-sm: 8px;
             --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
             --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
-            
             --success: #10b981;
             --success-soft: #ecfdf5;
             --danger: #ef4444;
@@ -167,32 +198,49 @@ if (isset($_POST['update'])) {
         .title i { color:var(--primary); font-size:20px; }
 
         /* PROFILE AVATAR BLOCK */
-        .profile { display:flex; align-items:center; gap:24px; margin-bottom:32px; background: var(--bg-app); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
-        .profile img { width:84px; height:84px; object-fit:cover; border-radius:50%; border:3px solid var(--surface); box-shadow: var(--shadow-sm); }
-        .profile h3 { font-size:18px; font-weight: 600; color:var(--text-main); text-transform: capitalize; }
-        .profile p { color:var(--text-muted); font-size: 13px; margin-top: 2px; }
+        .profile { display:flex; align-items:center; gap:24px; margin-bottom:32px; background: var(--bg-app); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color); position: relative; }
+        .profile-img-container { position: relative; flex-shrink: 0; width: 84px; height: 84px; }
+        .profile-img-container img { width:84px; height:84px; object-fit:cover; border-radius:50%; border:3px solid var(--surface); box-shadow: var(--shadow-sm); }
+        .profile-info h3 { font-size:18px; font-weight: 600; color:var(--text-main); text-transform: capitalize; }
+        .profile-info p { color:var(--text-muted); font-size: 13px; margin-top: 2px; }
 
-        /* FORM METRICS */
+        .avatar-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+        .btn-upload { background: var(--primary-soft); color: var(--primary); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border-color); display: inline-block; text-align: center; }
+        .btn-delete { background: var(--danger-soft); color: var(--danger); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #fca5a5; display: inline-block; text-align: center; font-family: inherit; }
+
+        /* FORM */
         .form { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
         .group { display:flex; flex-direction:column; }
         .group-full { grid-column: 1 / -1; display:flex; flex-direction:column; }
         
         label { margin-bottom:8px; font-weight:500; font-size: 13px; color:var(--text-main); }
-        input { height:46px; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:0 16px; background: var(--bg-app); color: var(--text-main); font-size: 14px; transition: all .2s ease; }
-        input:focus { outline:none; border-color:var(--primary-light); background: var(--surface); box-shadow:0 0 0 4px var(--primary-soft); }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] { 
+            height:46px; border:1px solid var(--border-color); border-radius:var(--radius-md); 
+            padding:0 16px; background: var(--bg-app); color: var(--text-main); 
+            font-size: 14px; transition: all .2s ease; width: 100%;
+        }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus { 
+            outline:none; border-color:var(--primary-light); background: var(--surface); 
+            box-shadow:0 0 0 4px var(--primary-soft); 
+        }
         input::placeholder { color: var(--text-muted); font-size: 13px; opacity: 0.7; }
 
-        /* INTERACTIVES */
+        /* CHECKBOX */
         .check { display:flex; align-items:center; gap:12px; margin-top:24px; background: var(--bg-app); padding:16px; border-radius:var(--radius-md); border: 1px solid var(--border-color); }
-        .check input { width:16px; height:16px; cursor: pointer; accent-color: var(--primary); }
+        .check input[type="checkbox"] { width:16px; height:16px; cursor: pointer; accent-color: var(--primary); }
         .check label { margin-bottom: 0; cursor: pointer; color: var(--text-muted); font-size: 13px; font-weight: 500; }
 
-        button[type="submit"] { 
+        button[type="submit"].btn-save { 
             margin-top:24px; border:none; background: var(--primary); color:white; padding:14px 28px; 
             border-radius:var(--radius-md); cursor:pointer; font-size:14px; font-weight:600; 
             display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all .2s ease; 
+            font-family: inherit;
         }
-        button[type="submit"]:hover { background: var(--primary-light); transform:translateY(-1px); box-shadow: var(--shadow-md); }
+        button[type="submit"].btn-save:hover { background: var(--primary-light); transform:translateY(-1px); box-shadow: var(--shadow-md); }
 
         footer { text-align:center; padding: 24px 0; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--border-color); margin-top: 40px; }
 
@@ -204,7 +252,7 @@ if (isset($_POST['update'])) {
             .top h1 { font-size:22px; }
             .form { grid-template-columns:1fr; gap: 16px; }
             .card { padding: 20px; }
-            button[type="submit"] { width: 100%; }
+            button[type="submit"].btn-save { width: 100%; }
         }
     </style>
 </head>
@@ -246,7 +294,8 @@ if (isset($_POST['update'])) {
 
     <?php if(isset($_GET['success'])) : ?>
         <div class="alert alert-success">
-            <i class="fas fa-circle-check"></i> Votre profil a été mis à jour avec succès.
+            <i class="fas fa-circle-check"></i> 
+            <?= $_GET['success'] == 2 ? "Photo supprimée avec succès." : "Votre profil a été mis à jour avec succès." ?>
         </div>
     <?php endif; ?>
 
@@ -256,13 +305,51 @@ if (isset($_POST['update'])) {
             <h2>Configuration des accès</h2>
         </div>
 
-        <form method="POST">
+        <!-- Formulaire séparé pour la suppression de photo -->
+        <?php if(!empty($locataire['photo'])): ?>
+        <form method="POST" id="form-delete-photo" style="display:none;">
+            <input type="hidden" name="delete_photo" value="1">
+        </form>
+        <?php endif; ?>
+
+        <form method="POST" enctype="multipart/form-data">
+            
             <div class="profile">
-                <img src="https://ui-avatars.com/api/?name=<?= urlencode($locataire['prenom'].'+'.$locataire['nom']) ?>&background=1e40af&color=fff" alt="avatar">
-                <div>
+
+                <!-- ✅ PHOTO DU LOCATAIRE -->
+                <div class="profile-img-container">
+                    <?php if (!empty($locataire['photo'])): ?>
+                        <img 
+                            id="preview-photo"
+                            src="<?= htmlspecialchars($avatar_url_path . $locataire['photo']) ?>" 
+                            alt="Photo de profil"
+                            onerror="this.src='https://ui-avatars.com/api/?name=<?= urlencode($locataire['prenom'] . '+' . $locataire['nom']) ?>&background=1e40af&color=fff&size=84'">
+                    <?php else: ?>
+                        <img 
+                            id="preview-photo"
+                            src="https://ui-avatars.com/api/?name=<?= urlencode($locataire['prenom'] . '+' . $locataire['nom']) ?>&background=1e40af&color=fff&size=84" 
+                            alt="Avatar par défaut">
+                    <?php endif; ?>
+                </div>
+
+                <div class="profile-info">
                     <h3><?= htmlspecialchars($locataire['prenom'] . ' ' . $locataire['nom']) ?></h3>
                     <p><?= htmlspecialchars($locataire['email']) ?></p>
+
+                    <div class="avatar-actions">
+                        <label for="photo-input" class="btn-upload">
+                            <i class="fas fa-camera"></i> Modifier la photo
+                        </label>
+                        <input type="file" id="photo-input" name="photo" accept="image/jpeg, image/png, image/jpg, image/webp" style="display:none;">
+                        
+                        <?php if(!empty($locataire['photo'])): ?>
+                            <button type="button" class="btn-delete" onclick="confirmerSuppression()">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
+
             </div>
 
             <div class="form">
@@ -297,7 +384,7 @@ if (isset($_POST['update'])) {
                 <label for="notif">Recevoir les alertes de factures et quittances par email</label>
             </div>
 
-            <button type="submit" name="update">
+            <button type="submit" name="update" class="btn-save">
                 <i class="fas fa-floppy-disk"></i> Enregistrer les modifications
             </button>
         </form>
@@ -312,6 +399,22 @@ if (isset($_POST['update'])) {
 function toggleMenu(){
     document.getElementById("sidebar").classList.toggle("show");
 }
+
+function confirmerSuppression() {
+    if (confirm('Supprimer votre photo de profil ?')) {
+        document.getElementById('form-delete-photo').submit();
+    }
+}
+
+document.getElementById('photo-input').onchange = function() {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-photo').src = e.target.result;
+        };
+        reader.readAsDataURL(this.files[0]);
+    }
+};
 </script>
 </body>
 </html>

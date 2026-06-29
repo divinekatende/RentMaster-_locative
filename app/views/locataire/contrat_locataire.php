@@ -1,33 +1,30 @@
 <?php
 session_start();
  
-// 1. Sécurité : locataire connecté obligatoire
 if (!isset($_SESSION['id_locataire'])) {
     header('Location: ../../auth/login-locataire.php');
     exit;
 }
  
 $id_locataire = $_SESSION['id_locataire'];
-$nom     = $_SESSION['nom']    ?? '';
+$nom    = $_SESSION['nom']    ?? '';
 $prenom = $_SESSION['prenom'] ?? '';
 
-// ===========================================================
-// CONNEXION BDD POUR RÉCUPÉRER LE VRAI CONTRAT
-// ===========================================================
 require_once(__DIR__ . '/../../config/database.php');
  
-$contrat_bdd = null;
+$contrat_bdd        = null;
 $prochaine_echeance = "N/A";
 
 try {
     $database = new Database();
-    $conn = $database->connect();
+    $conn     = $database->connect();
  
-    // Récupérer le contrat actif
+    // AJOUT OPTIMISÉ : Jointure avec 'biens' pour avoir le titre et l'adresse dans le bail
     $stmt = $conn->prepare("
-        SELECT id_contrat, montant, date_debut, date_fin, statut 
-        FROM contrats 
-        WHERE id_locataire = :id AND statut = 'Actif' 
+        SELECT c.*, b.titre AS bien_titre, b.adresse AS bien_adresse
+        FROM contrats c
+        LEFT JOIN biens b ON c.id_bien = b.id_bien
+        WHERE c.id_locataire = :id AND c.statut = 'Actif' 
         LIMIT 1
     ");
     $stmt->execute([':id' => $id_locataire]);
@@ -38,8 +35,8 @@ try {
         $stmt2->execute([':id' => $contrat_bdd['id_contrat']]);
         $mois_payes = $stmt2->fetchAll(PDO::FETCH_COLUMN);
  
-        $debut = new DateTime($contrat_bdd['date_debut']);
-        $fin   = new DateTime($contrat_bdd['date_fin']);
+        $debut  = new DateTime($contrat_bdd['date_debut']);
+        $fin    = new DateTime($contrat_bdd['date_fin']);
         $cursor = clone $debut;
  
         while ($cursor <= $fin) {
@@ -53,6 +50,15 @@ try {
     }
 } catch (PDOException $e) {
     $contrat_bdd = null;
+}
+
+// Helper pour afficher la répartition
+function labelRepartition($val) {
+    switch ($val) {
+        case 'Bailleur':  return '🏠 Bailleur';
+        case 'Les deux':  return '🤝 Les deux parties';
+        default:          return '👤 Locataire';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -79,7 +85,6 @@ try {
             --radius-sm: 8px;
             --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
             --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
-            
             --success: #10b981;
             --success-soft: #ecfdf5;
             --danger: #ef4444;
@@ -125,6 +130,19 @@ try {
         .card h3 i { color:var(--primary); }
         .card p { margin-bottom:12px; color:var(--text-muted); font-size:14px; line-height: 1.5; }
         .card p strong { color: var(--text-main); font-weight: 500; }
+
+        /* TABLEAU RÉPARTITION */
+        .repartition-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+        .repartition-table th {
+            background: var(--primary-soft); color: var(--primary);
+            padding: 10px 14px; text-align: left; font-weight: 600; font-size: 12px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .repartition-table th:first-child { border-radius: 8px 0 0 0; }
+        .repartition-table th:last-child  { border-radius: 0 8px 0 0; }
+        .repartition-table td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+        .repartition-table tr:last-child td { border-bottom: none; }
+        .repartition-table tr:hover td { background: #f8fafc; }
         
         input[type="file"] { width:100%; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-app); margin-bottom:16px; font-size: 14px; }
         
@@ -143,9 +161,7 @@ try {
         .no-contrat { background: var(--danger-soft); border-left: 4px solid var(--danger); padding: 16px 20px; border-radius: var(--radius-md); color: #b91c1c; margin-bottom: 32px; font-weight: 500; font-size: 14px; }
         footer { text-align:center; padding: 24px 0; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--border-color); margin-top: auto; }
 
-        /* ===========================================================
-           MODALE D'APERCU DU CONTRAT (PLEIN ÉCRAN INTERACTIF)
-           =========================================================== */
+        /* MODALE D'APERÇU DU CONTRAT */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
@@ -176,7 +192,7 @@ try {
 
         .modal-body-scroll { flex: 1; overflow-y: auto; padding: 40px 20px; display: flex; justify-content: center; }
         
-        /* FEUILLE PAPER A4 POUR CONTRAT */
+        /* FEUILLE A4 POUR CONTRAT */
         .paper-page {
             background: var(--surface); width: 100%; max-width: 700px;
             padding: 50px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
@@ -234,10 +250,45 @@ try {
             <div class="card">
                 <h3><i class="fas fa-file-signature"></i> Informations du bail en cours</h3>
                 <p><strong>Numéro de Contrat :</strong> #<?= htmlspecialchars($contrat_bdd['id_contrat']) ?></p>
+                <p><strong>Bien rattaché :</strong> <?= htmlspecialchars($contrat_bdd['bien_titre'] ?? 'Non spécifié') ?></p>
                 <p><strong>Montant du Loyer :</strong> <?= number_format($contrat_bdd['montant'], 0, ',', ' ') ?> $</p>
+                <?php if (!empty($contrat_bdd['charges']) && $contrat_bdd['charges'] > 0): ?>
+                <p><strong>Charges locatives :</strong> <?= number_format($contrat_bdd['charges'], 0, ',', ' ') ?> $</p>
+                <p><strong>Total mensuel (CC) :</strong> <span style="color: var(--primary); font-weight:700;"><?= number_format($contrat_bdd['montant'] + $contrat_bdd['charges'], 0, ',', ' ') ?> $</span></p>
+                <?php endif; ?>
                 <p><strong>Date de prise d'effet :</strong> <?= htmlspecialchars(date('d/m/Y', strtotime($contrat_bdd['date_debut']))) ?></p>
                 <p><strong>Date de fin de bail :</strong> <?= htmlspecialchars(date('d/m/Y', strtotime($contrat_bdd['date_fin']))) ?></p>
-                <p><strong>Statut administratif :</strong> <span style="color: #10b981; font-weight: 600; background: var(--success-soft); padding: 4px 8px; border-radius: 20px; font-size: 12px; border: 1px solid #a7f3d0;"><?= htmlspecialchars($contrat_bdd['statut']) ?></span></p>
+                <p><strong>Statut administratif :</strong>
+                    <span style="color: #10b981; font-weight: 600; background: var(--success-soft); padding: 4px 8px; border-radius: 20px; font-size: 12px; border: 1px solid #a7f3d0;">
+                        <?= htmlspecialchars($contrat_bdd['statut']) ?>
+                    </span>
+                </p>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-scale-balanced"></i> Répartition des charges & impôts</h3>
+                <table class="repartition-table">
+                    <thead>
+                        <tr>
+                            <th>Poste</th>
+                            <th>Responsable du paiement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><i class="fa fa-droplet" style="color:#3b82f6; margin-right:8px;"></i> Charge eau</td>
+                            <td><?= labelRepartition($contrat_bdd['charge_eau'] ?? 'Locataire') ?></td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa fa-bolt" style="color:#f59e0b; margin-right:8px;"></i> Charge électricité</td>
+                            <td><?= labelRepartition($contrat_bdd['charge_electricite'] ?? 'Locataire') ?></td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa fa-landmark" style="color:#6366f1; margin-right:8px;"></i> Impôts & taxes</td>
+                            <td><?= labelRepartition($contrat_bdd['impot_locataire'] ?? 'Locataire') ?></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="card">
@@ -281,44 +332,77 @@ try {
         <div class="modal-body-scroll">
             
             <div class="paper-page" id="pdf-template">
+
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #1e40af; padding-bottom: 20px;">
                     <div>
                         <h1 style="color: #1e40af; font-size: 24px; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Contrat de Bail</h1>
                         <p style="font-size: 13px; color: #64748b;">Référence officielle : <strong>#Rent-<?= htmlspecialchars($contrat_bdd['id_contrat']) ?></strong></p>
                     </div>
                     <div style="text-align: right;">
-                        <img src="../../../public/assets/images/logo.png" alt="Logo RentMaster" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0;">
-                        <div style="font-size: 12px; font-weight: 700; color: #1e40af; margin-top: 4px;">RentMaster</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #1e40af; letter-spacing: -0.03em;">⭐ RentMaster</div>
+                        <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Platform Contract</div>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 20px;">
-                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;"><i class="fas fa-building"></i> 1. Désignation du Bailleur</h3>
+                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;">1. Désignation du Bailleur</h3>
                     <p style="font-size: 13px; color: #334155;">Le présent contrat est géré et certifié par l'agence mandataire automatisée <strong>RentMaster Real Estate</strong>, agissant en qualité de gestionnaire légal pour le compte du propriétaire bailleur titulaire du patrimoine.</p>
                 </div>
 
                 <div style="margin-bottom: 20px;">
-                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;"><i class="fas fa-user-tie"></i> 2. Désignation du Locataire</h3>
+                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;">2. Désignation du Locataire</h3>
                     <p style="font-size: 13px; color: #334155;">Le preneur certifié titulaire est désigné ci-après : <strong>M. / Mme <?= htmlspecialchars($prenom . ' ' . $nom) ?></strong>, inscrit sous la référence locataire unique #<?= htmlspecialchars($id_locataire) ?>.</p>
                 </div>
 
                 <div style="margin-bottom: 20px;">
-                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;"><i class="fas fa-house-chimney"></i> 3. Description du Bien Immobilier</h3>
-                    <p style="font-size: 13px; color: #334155;">Les locaux à usage exclusif d'habitation comprennent le lot d'appartement rattaché au contrat d'hébergement. Le bien répond à toutes les normes légales de décence et de sécurité structurelle en vigueur.</p>
+                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;">3. Description du Bien Immobilier</h3>
+                    <p style="font-size: 13px; color: #334155;">Les locaux à usage exclusif d'habitation comprennent l'unité suivante : <strong><?= htmlspecialchars($contrat_bdd['bien_titre'] ?? 'Lot Privatif') ?></strong> situé à l'adresse : <em><?= htmlspecialchars($contrat_bdd['bien_adresse'] ?? 'Adresse enregistrée sur le système') ?></em>. Le bien répond à toutes les normes légales de décence et de sécurité structurelle en vigueur.</p>
                 </div>
 
-                <div style="margin-bottom: 25px;">
-                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;"><i class="fas fa-gavel"></i> 4. Conditions Financi&egrave;res et Dur&eacute;e</h3>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;">4. Conditions Financières et Durée</h3>
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px;">
-                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Redevance Loyer Mensuel :</strong> <?= number_format($contrat_bdd['montant'], 2, ',', ' ') ?> $ (Net de charges administratives)</p>
-                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Date Initiale de Prise d'Effet :</strong> <?= htmlspecialchars(date('d/m/Y', strtotime($contrat_bdd['date_debut']))) ?></p>
-                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Date d’Échéance du Terme :</strong> <?= htmlspecialchars(date('d/m/Y', strtotime($contrat_bdd['date_fin']))) ?></p>
-                        <p style="font-size: 13px;"><strong>• Statut de la Convention :</strong> Validation Juridique Active (<?= htmlspecialchars($contrat_bdd['statut']) ?>)</p>
+                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Loyer mensuel (net hors charges) :</strong> <?= number_format($contrat_bdd['montant'], 2, ',', ' ') ?> $</p>
+                        <?php if (!empty($contrat_bdd['charges']) && $contrat_bdd['charges'] > 0): ?>
+                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Provisions pour charges :</strong> <?= number_format($contrat_bdd['charges'], 2, ',', ' ') ?> $</p>
+                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Total mensuel charges comprises :</strong> <?= number_format($contrat_bdd['montant'] + $contrat_bdd['charges'], 2, ',', ' ') ?> $</p>
+                        <?php endif; ?>
+                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Date initiale de prise d'effet :</strong> <?= htmlspecialchars(date('d/m/Y', strtotime($contrat_bdd['date_debut']))) ?></p>
+                        <p style="margin-bottom: 8px; font-size: 13px;"><strong>• Date d'échéance du terme :</strong> <?= htmlspecialchars(date('d/m/Y', strtotime($contrat_bdd['date_fin']))) ?></p>
+                        <p style="font-size: 13px;"><strong>• Statut de la convention :</strong> Validation juridique active (<?= htmlspecialchars($contrat_bdd['statut']) ?>)</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;">5. Répartition des Charges et Impôts</h3>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0; border-radius: 8px; overflow: hidden;">
+                        <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                            <thead>
+                                <tr style="background: #eff6ff;">
+                                    <th style="padding: 10px 14px; text-align:left; color:#1e40af; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; border-bottom: 1px solid #e2e8f0;">Poste</th>
+                                    <th style="padding: 10px 14px; text-align:left; color:#1e40af; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; border-bottom: 1px solid #e2e8f0;">Responsable du paiement</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color:#334155;">💧 Charge eau</td>
+                                    <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color:#334155; font-weight:600;"><?= htmlspecialchars(labelRepartition($contrat_bdd['charge_eau'] ?? 'Locataire')) ?></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color:#334155;">⚡ Charge électricité</td>
+                                    <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color:#334155; font-weight:600;"><?= htmlspecialchars(labelRepartition($contrat_bdd['charge_electricite'] ?? 'Locataire')) ?></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px 14px; color:#334155;">🏛️ Impôts & taxes</td>
+                                    <td style="padding: 10px 14px; color:#334155; font-weight:600;"><?= htmlspecialchars(labelRepartition($contrat_bdd['impot_locataire'] ?? 'Locataire')) ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 35px;">
-                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;"><i class="fas fa-handshake-angle"></i> 5. Obligations Générales</h3>
+                    <h3 style="color: #1e40af; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px;">6. Obligations Générales</h3>
                     <p style="font-size: 12px; text-align: justify; color: #475569; line-height: 1.5;">Le preneur s'oblige expressément à jouir des locaux en bon père de famille, à ne rien faire qui puisse en troubler la tranquillité publique, et à régler les loyers rubis sur l'ongle à chaque échéance mensuelle. En cas de non-paiement prolongé, le contrat de bail sera rompu unilatéralement conformément aux règles d'exploitation.</p>
                 </div>
 
@@ -329,14 +413,13 @@ try {
                     </div>
                     <div style="width: 45%; text-align: right;">
                         <p style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 15px;">Visa Direction Générale :</p>
-                        <div style="display: inline-block; border: 2px dashed #10b981; padding: 6px 12px; border-radius: 6px; color: #10b981; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: var(--success-soft);">
-                            <i class="fas fa-shield-halved"></i> Validé Numériquement
+                        <div style="display: inline-block; border: 2px dashed #10b981; padding: 6px 12px; border-radius: 6px; color: #10b981; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: #ecfdf5;">
+                            ✅ Validé Numériquement
                         </div>
                     </div>
                 </div>
-            </div>
 
-        </div>
+            </div></div>
     </div>
 </div>
 <?php endif; ?>
@@ -346,7 +429,6 @@ function toggleSidebar(){
     document.getElementById('sidebar').classList.toggle("show");
 }
 
-/* GESTION DE LA MODALE D'APERCU */
 function ouvrirApercuContrat() {
     document.getElementById('contratModal').classList.add('show');
 }
@@ -356,7 +438,8 @@ function fermerApercuContrat() {
 }
 
 /* DOCUMENTS COMPLÉMENTAIRES */
-let documents = JSON.parse(localStorage.getItem("documents")) || [];
+let documents = [];
+try { documents = JSON.parse(localStorage.getItem("documents")) || []; } catch(e){}
 
 function afficherDocs(){
     let ul = document.getElementById("listeDocs");
@@ -372,37 +455,27 @@ function afficherDocs(){
 
 function ajouterDocument(){
     let file = document.getElementById("fileInput").files[0];
-    if(!file){
-        alert("Veuillez sélectionner un fichier au préalable !");
-        return;
-    }
+    if(!file){ alert("Veuillez sélectionner un fichier au préalable !"); return; }
     documents.push(file.name);
-    localStorage.setItem("documents",JSON.stringify(documents));
+    try { localStorage.setItem("documents", JSON.stringify(documents)); } catch(e){}
     afficherDocs();
-
     let btn = document.getElementById("addBtn");
     btn.innerHTML = "<i class='fas fa-check'></i> Document ajouté";
     btn.style.background = "#10b981";
-    setTimeout(()=>{
-        btn.innerHTML = "<i class='fas fa-plus'></i> Joindre le document";
-        btn.style.background = "var(--primary)";
-    },2000);
+    setTimeout(()=>{ btn.innerHTML = "<i class='fas fa-plus'></i> Joindre le document"; btn.style.background = "var(--primary)"; }, 2000);
 }
 
 function supprimerDoc(i){
     documents.splice(i,1);
-    localStorage.setItem("documents",JSON.stringify(documents));
+    try { localStorage.setItem("documents", JSON.stringify(documents)); } catch(e){}
     afficherDocs();
 }
 
-/* TÉLÉCHARGEMENT DEPUIS LA MODALE D'APERCU */
 function telechargerContrat(){
     let btn = document.getElementById("downloadBtn");
     let element = document.getElementById('pdf-template');
-    
     btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Téléchargement...";
     btn.style.opacity = "0.7";
-
     let opt = {
         margin:       12,
         filename:     'Contrat_Bail_RentMaster_<?= htmlspecialchars($id_locataire) ?>.pdf',
@@ -410,13 +483,9 @@ function telechargerContrat(){
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-
-    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-        btn.innerHTML = "<i class='fas fa-check'></i> Fichier enregistré";
-        setTimeout(()=>{
-            btn.innerHTML = "<i class='fas fa-download'></i> Télécharger en PDF";
-            btn.style.opacity = "1";
-        }, 2000);
+    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function() {
+        btn.innerHTML = "<i class='fas fa-download'></i> Télécharger en PDF";
+        btn.style.opacity = "1";
     }).save();
 }
 

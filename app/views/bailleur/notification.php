@@ -9,10 +9,13 @@ $controller = new NotificationController();
 $id_user = $_SESSION['id'];
 $type_user = $_SESSION['role']; // 'bailleur' ou 'locataire'
 
-// Marquer automatiquement les notifications comme lues à l'ouverture de la page
+// 1. SYNCHRONISATION AUTOMATIQUE : Génère les alertes Calendrier / Paiement si nécessaire
+$controller->synchroniserEvenements($id_user, $type_user);
+
+// 2. Marquer automatiquement les notifications existantes comme lues à l'ouverture de la page
 $controller->marquerCommeLu($id_user, $type_user);
 
-// Récupération des notifications depuis la BDD
+// 3. Récupération finale des notifications mises à jour
 $notifications = $controller->getNotifications($id_user, $type_user);
 ?>
 
@@ -31,6 +34,7 @@ $notifications = $controller->getNotifications($id_user, $type_user);
             --surface: #ffffff;         /* Blanc pur */
             --primary: #1e40af;         /* Bleu Cobalt Royal */
             --primary-light: #3b82f6;   /* Bleu accent */
+            --primary-soft: #eff6ff;    /* AJOUTÉ : Pour le fond du count-badge */
             --text-main: #0f172a;       /* Noir confort */
             --text-muted: #64748b;      /* Gris ardoise */
             --border-color: #e2e8f0;    /* Lignes de séparation fines */
@@ -243,7 +247,7 @@ $notifications = $controller->getNotifications($id_user, $type_user);
 
                         <div class="notif-meta">
                             <span class="time"><?= date('d/m H:i', strtotime($n['created_at'])) ?></span>
-                            <button class="btn-action-delete" onclick="supprimerNotification(<?= $n['id_notification'] ?>)" title="Supprimer l'alerte">
+                            <button class="btn-action-delete" onclick="supprimerNotification(<?= $n['id'] ?>)" title="Supprimer l'alerte">
                                 <i class="fa-regular fa-trash-can"></i>
                             </button>
                         </div>

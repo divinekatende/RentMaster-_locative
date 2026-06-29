@@ -26,7 +26,7 @@ $loyer_mensuel     = null;
 $statut_contrat    = null;
 $prochaine_echeance = null;
 $statut_paiement   = 'Inconnu';
-$mois_courant      = date('Y-m');
+$mois_courant      = date('Y-m'); // Ex: '2026-06'
  
 try {
     $database = new Database();
@@ -47,7 +47,7 @@ try {
         $loyer_mensuel  = $contrat['montant'];
         $statut_contrat = $contrat['statut'];
  
-        // --- 2. Prochaine échéance : trouver le premier mois non payé (Complet) ---
+        // --- 2. Récupérer tous les mois payés intégralement ---
         $stmt2 = $conn->prepare("
             SELECT mois_annee FROM paiements 
             WHERE id_contrat = :id_contrat AND statut = 'Complet'
@@ -55,30 +55,12 @@ try {
         $stmt2->execute([':id_contrat' => $id_contrat]);
         $mois_payes = $stmt2->fetchAll(PDO::FETCH_COLUMN);
  
-        $debut = new DateTime($contrat['date_debut']);
-        $fin   = new DateTime($contrat['date_fin']);
-        $cursor = clone $debut;
- 
-        $prochaine_echeance = null;
-        while ($cursor <= $fin) {
-            $mois_str = $cursor->format('Y-m');
-            if (!in_array($mois_str, $mois_payes)) {
-                $prochaine_echeance = $cursor->format('d M. Y');
-                break;
-            }
-            $cursor->modify('+1 month');
-        }
-        if (!$prochaine_echeance) {
-            $prochaine_echeance = 'Tout payé ✅';
-        }
- 
-        // --- 3. Statut paiement du mois courant ---
+        // --- 3. Statut de paiement du mois en cours ---
         $stmt3 = $conn->prepare("
             SELECT statut, SUM(montant_verse) as total_verse
             FROM paiements 
             WHERE id_contrat = :id_contrat AND mois_annee = :mois
             GROUP BY statut
-            ORDER BY FIELD(statut, 'Complet', 'Acompte') 
             LIMIT 1
         ");
         $stmt3->execute([':id_contrat' => $id_contrat, ':mois' => $mois_courant]);
@@ -95,6 +77,27 @@ try {
         } else {
             $statut_paiement = 'Non payé';
         }
+
+        // --- 4. Calcul de la prochaine échéance (Dernier jour du premier mois non payé) ---
+        $debut = new DateTime($contrat['date_debut']);
+        $fin   = new DateTime($contrat['date_fin']);
+        $cursor = clone $debut;
+ 
+        $prochaine_echeance = null;
+        while ($cursor <= $fin) {
+            $mois_str = $cursor->format('Y-m');
+            if (!in_array($mois_str, $mois_payes)) {
+                $dernier_jour = $cursor->format('t'); // Trouve dynamiquement 28, 29, 30 ou 31
+                $cursor->setDate((int)$cursor->format('Y'), (int)$cursor->format('m'), (int)$dernier_jour);
+                $prochaine_echeance = $cursor->format('d M. Y');
+                break;
+            }
+            $cursor->modify('+1 month');
+        }
+        
+        if (!$prochaine_echeance) {
+            $prochaine_echeance = 'Tout payé ✅';
+        }
     }
  
 } catch (PDOException $e) {
@@ -105,8 +108,8 @@ try {
 }
  
 $couleur_statut = match(true) {
-    str_starts_with($statut_paiement, 'Payé')     => ['icon' => 'icon-green',  'fa' => 'fa-circle-check',      'color' => '#10b981', 'bg' => '#ecfdf5'],
-    str_starts_with($statut_paiement, 'Acompte')   => ['icon' => 'icon-orange', 'fa' => 'fa-circle-half-stroke', 'color' => '#f59e0b', 'bg' => '#fef3c7'],
+    str_starts_with($statut_paiement, 'Payé')    => ['icon' => 'icon-green',  'fa' => 'fa-circle-check',      'color' => '#10b981', 'bg' => '#ecfdf5'],
+    str_starts_with($statut_paiement, 'Acompte')  => ['icon' => 'icon-orange', 'fa' => 'fa-circle-half-stroke', 'color' => '#f59e0b', 'bg' => '#fef3c7'],
     default                                         => ['icon' => 'icon-red',    'fa' => 'fa-circle-xmark',      'color' => '#ef4444', 'bg' => '#fef2f2'],
 };
 ?>
@@ -119,6 +122,7 @@ $couleur_statut = match(true) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        /* CSS VARIABLES DU THEME CLAIR (PAR DEFAUT) */
         :root {
             --bg-app: #f8fafc;
             --surface: #ffffff;
@@ -142,10 +146,23 @@ $couleur_statut = match(true) {
             --success-soft: #ecfdf5;
         }
 
+        /* OVERRIDES POUR LE THEME SOMBRE */
+        [data-theme="dark"] {
+            --bg-app: #0f172a;
+            --surface: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --primary-soft: #1e293b;
+            --primary-light: #60a5fa;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        body { background: var(--bg-app); color: var(--text-main); min-height: 100vh; display: flex; }
+        body { background: var(--bg-app); color: var(--text-main); min-height: 100vh; display: flex; transition: background 0.3s, color 0.3s; }
         
-        /* SIDEBAR COMPACTE & MODERNE */
+        /* SIDEBAR */
         aside {
             width: 260px;
             background: var(--surface);
@@ -155,17 +172,12 @@ $couleur_statut = match(true) {
             height: 100%;
             display: flex;
             flex-direction: column;
-            transition: 0.3s ease;
             z-index: 999;
+            transition: background 0.3s, border 0.3s;
         }
         .logo { text-align: center; margin-bottom: 32px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .logo img {
-            width: 70px; height: 70px;
-            border-radius: 50%;
-            border: 3px solid var(--primary-soft);
-            object-fit: cover;
-        }
         .logo h2 { color: var(--primary); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+        [data-theme="dark"] .logo h2 { color: var(--primary-light); }
         aside nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
         aside a {
             display: flex;
@@ -179,25 +191,24 @@ $couleur_statut = match(true) {
             font-size: 14px;
             transition: all 0.2s ease;
         }
-        aside a:hover {
+        aside a:hover, aside a.active {
             background: var(--primary-soft);
             color: var(--primary);
-        }
-        aside a.active {
-            background: var(--primary);
-            color: white;
             font-weight: 600;
         }
+        [data-theme="dark"] aside a:hover { color: var(--primary-light); }
+        aside a.active { background: var(--primary); color: white; }
+        [data-theme="dark"] aside a.active { background: var(--primary-light); color: #0f172a; }
         aside a i { width: 20px; text-align: center; font-size: 16px; }
         
         .sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 16px; }
         .sidebar-footer a { color: var(--danger); background: var(--danger-soft); }
+        [data-theme="dark"] .sidebar-footer a { background: rgba(239, 68, 68, 0.1); }
         .sidebar-footer a:hover { background: var(--danger); color: white; }
         
-        /* CONTENT SPA */
-        .content { margin-left: 260px; width: 100%; padding: 40px; }
+        /* CONTENT CONTAINER */
+        .content { margin-left: 260px; width: 100%; padding: 40px; display: flex; flex-direction: column; transition: padding 0.3s; }
         
-        /* ALERTE SECURITE */
         .banner-first-login {
             background: var(--warning-soft);
             border-left: 4px solid var(--warning);
@@ -207,12 +218,15 @@ $couleur_statut = match(true) {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
             gap: 16px;
             box-shadow: var(--shadow-sm);
         }
-        .banner-first-login .txt h3 { color: #92400e; font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-        .banner-first-login .txt p  { color: #b45309; font-size: 13px; }
+        [data-theme="dark"] .banner-first-login { background: #451a03; border-left-color: var(--warning); }
+        .banner-first-login .txt h3 { color: #92400e; font-size: 15px; font-weight: 600; }
+        [data-theme="dark"] .banner-first-login .txt h3 { color: #fef3c7; }
+        .banner-first-login .txt p  { color: #b45309; font-size: 13px; margin-top: 2px; }
+        [data-theme="dark"] .banner-first-login .txt p { color: #fde68a; }
+        
         .banner-first-login a {
             background: var(--primary);
             color: white;
@@ -223,13 +237,19 @@ $couleur_statut = match(true) {
             font-size: 13px;
             transition: 0.2s ease;
         }
-        .banner-first-login a:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .banner-first-login a:hover { background: var(--primary-light); }
         
-        /* TOPBAR & TITRE */
         .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .topbar h1 { font-size: 24px; font-weight: 700; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+        .topbar h1 { font-size: 24px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+        .topbar-actions { display: flex; gap: 10px; }
+
+        /* THEME TOGGLE BUTTON & MENU BTN */
+        .theme-btn, .menu-btn {
+            width: 40px; height: 40px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            background: var(--surface); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;
+        }
+        .theme-btn:hover, .menu-btn:hover { background: var(--primary-soft); border-color: var(--primary-light); }
         
-        /* WELCOME BLOCK ÉPURÉ */
         .welcome {
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
@@ -238,63 +258,60 @@ $couleur_statut = match(true) {
             margin-bottom: 32px;
             box-shadow: var(--shadow-md);
         }
-        .welcome h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+        .welcome h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
         .welcome p  { opacity: 0.85; font-size: 14px; }
         
-        /* GRILLE DE KPI CARDS */
+        /* KPI GRID */
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
         .card {
             background: var(--surface); padding: 24px; border-radius: var(--radius-lg);
             box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 16px; 
-            border: 1px solid var(--border-color); transition: all 0.2s ease;
+            border: 1px solid var(--border-color); transition: all 0.2s ease, background 0.3s;
         }
-        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: #cbd5e1; }
+        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--primary-light); }
         .card .icon {
             width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
-            font-size: 18px; color: white; flex-shrink: 0;
+            font-size: 18px; flex-shrink: 0;
         }
         .icon-blue   { background: var(--primary-soft); color: var(--primary); }
+        [data-theme="dark"] .icon-blue { background: rgba(59, 130, 246, 0.1); color: var(--primary-light); }
         .icon-orange { background: var(--warning-soft); color: var(--warning); }
-        .icon-red    { background: var(--danger-soft); color: var(--danger); }
-        .icon-green  { background: var(--success-soft); color: var(--success); }
+        [data-theme="dark"] .icon-orange { background: rgba(245, 158, 11, 0.1); }
         
-        .card .val   { font-size: 16px; font-weight: 700; color: var(--text-main); letter-spacing: -0.01em; }
+        .card .val   { font-size: 16px; font-weight: 700; color: var(--text-main); }
         .card .lbl   { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
         
-        /* ACTION PRINCIPALE */
         .btn-payer {
             background: var(--success); color: white; border: none; padding: 14px 24px;
             border-radius: var(--radius-md); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 32px; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 32px; text-decoration: none; width: max-content;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         }
-        .btn-payer:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
+        .btn-payer:hover { background: #059669; transform: translateY(-2px); }
         
-        .no-contrat { background: var(--danger-soft); border-left: 4px solid var(--danger); padding: 16px 20px; border-radius: var(--radius-md); color: #b91c1c; margin-bottom: 32px; font-weight: 500; font-size: 14px; }
-        .menu-btn { display: none; width: 40px; height: 40px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-main); font-size: 16px; cursor: pointer; }
+        .no-contrat { background: var(--danger-soft); border-left: 4px solid var(--danger); padding: 16px 20px; border-radius: var(--radius-md); color: #b91c1c; margin-bottom: 32px; font-size: 14px; }
+        [data-theme="dark"] .no-contrat { background: rgba(239, 68, 68, 0.1); color: #fca5a5; }
+        .menu-btn { display: none; }
         
-        /* GRILLE ACTIONS RAPIDES */
-        .section-title { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
+        /* QUICK ACTIONS */
+        .section-title { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
         .quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 40px; }
         .quick-btn {
             background: var(--surface); border: 1px solid var(--border-color); padding: 20px 16px; border-radius: var(--radius-lg); text-align: center;
-            cursor: pointer; color: var(--primary); font-weight: 600; font-size: 14px; transition: all 0.2s ease; text-decoration: none; display: block;
+            color: var(--text-main); font-weight: 600; font-size: 14px; transition: all 0.2s ease; text-decoration: none; display: block;
             box-shadow: var(--shadow-sm);
         }
-        .quick-btn i { display: block; font-size: 20px; margin-bottom: 10px; color: var(--primary-light); }
-        .quick-btn:hover {
-            border-color: var(--primary-light); background: var(--primary-soft); transform: translateY(-2px); box-shadow: var(--shadow-md);
-        }
+        .quick-btn i { display: block; font-size: 20px; margin-bottom: 10px; color: var(--primary); }
+        [data-theme="dark"] .quick-btn i { color: var(--primary-light); }
+        .quick-btn:hover { border-color: var(--primary-light); background: var(--primary-soft); transform: translateY(-2px); }
         
         footer { text-align: center; padding: 24px 0; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--border-color); margin-top: auto; }
         
-        /* RESPONSIVE TABLETTE & MOBILE */
         @media (max-width: 900px) {
-            aside { left: -280px; }
+            aside { left: -280px; transition: 0.3s left; }
             aside.show { left: 0; box-shadow: var(--shadow-md); }
             .content { margin-left: 0; padding: 24px 16px; }
-            .menu-btn { display: flex; align-items: center; justify-content: center; }
-            .topbar { margin-top: 10px; }
+            .menu-btn { display: flex; }
         }
     </style>
 </head>
@@ -302,7 +319,6 @@ $couleur_statut = match(true) {
  
 <aside id="sidebar">
     <div class="logo">
-        <img src="../../../public/assets/images/logo.png" alt="logo">
         <h2>RentMaster</h2>
     </div>
     <nav>
@@ -329,10 +345,15 @@ $couleur_statut = match(true) {
     <?php endif; ?>
  
     <div class="topbar">
-        <h1><i class="fa-solid fa-gauge-high" style="color: var(--primary);"></i> Dashboard</h1>
-        <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('show')">
-            <i class="fa fa-bars"></i>
-        </button>
+        <h1><i class="fa-solid fa-gauge-high" style="color: var(--primary-light);"></i> Dashboard</h1>
+        <div class="topbar-actions">
+            <button class="theme-btn" id="themeToggle" title="Changer de thème">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('show')">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
     </div>
  
     <div class="welcome">
@@ -374,7 +395,7 @@ $couleur_statut = match(true) {
         </div>
  
         <div class="card">
-            <div class="icon icon-green"><i class="fa fa-file-contract"></i></div>
+            <div class="icon icon-blue"><i class="fa fa-file-contract"></i></div>
             <div>
                 <div class="val"><?= htmlspecialchars($statut_contrat) ?></div>
                 <div class="lbl">Statut Contrat</div>
@@ -387,7 +408,7 @@ $couleur_statut = match(true) {
  
     <div class="section-title">Actions rapides</div>
     <div class="quick">
-        <a href="message_locataire.php" class="quick-btn"><i class="fa fa-envelope"></i>Messages</a>
+        <a href="messagerie.php" class="quick-btn"><i class="fa fa-envelope"></i>Messages</a>
         <a href="notification_locataire.php" class="quick-btn"><i class="fa fa-bell"></i>Notifications</a>
         <a href="guide.php" class="quick-btn"><i class="fa fa-book"></i>Guide</a>
         <a href="calendrier_locataire.php" class="quick-btn"><i class="fa fa-calendar"></i>Calendrier</a>
@@ -397,8 +418,32 @@ $couleur_statut = match(true) {
 </div>
  
 <script>
+// Gestion Mobile Menu
 document.querySelector('.menu-btn')?.addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('show');
+});
+
+// GESTION DU THEME (Clair / Sombre)
+const themeToggle = document.getElementById('themeToggle');
+const currentTheme = localStorage.getItem('theme') || 'light';
+
+// Initialisation au chargement
+if (currentTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+}
+
+themeToggle.addEventListener('click', () => {
+    let theme = document.documentElement.getAttribute('data-theme');
+    if (theme === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    }
 });
 </script>
 </body>

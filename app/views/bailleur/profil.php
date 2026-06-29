@@ -11,30 +11,77 @@ $id_bailleur = $_SESSION['id'];
 /* ==========================================================================
    1. RÉCUPÉRER LE PROFIL DU BAILLEUR
    ========================================================================== */
-// Note : Changé de 'locataires' à 'bailleurs' pour correspondre à verifierRole(['bailleur'])
 $stmt = $conn->prepare("SELECT * FROM bailleurs WHERE id_bailleur = ? LIMIT 1");
 $stmt->execute([$id_bailleur]);
 $profil = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Génération des initiales (Prénom + Nom)
+$initiales = strtoupper(substr($profil['prenom'] ?? '', 0, 1) . substr($profil['nom'] ?? '', 0, 1));
+if (empty($initiales)) { $initiales = "RM"; }
+
+// Vérification de la photo existante
+$has_photo = !empty($profil['photo']) && file_exists(__DIR__ . '/../../public/uploads/' . $profil['photo']);
+$avatar_url = $has_photo ? '../../public/uploads/' . $profil['photo'] : '';
+
+$error = null;
+
 /* ==========================================================================
-   2. MISE À JOUR DU PROFIL
+   2. MISE À JOUR DU PROFIL & UPLOAD
    ========================================================================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nom = trim($_POST['nom'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    $nom_photo = $profil['photo']; 
 
-    if (!empty($password)) {
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("UPDATE bailleurs SET nom = ?, email = ?, mot_de_passe = ? WHERE id_bailleur = ?");
-        $stmt->execute([$nom, $email, $passwordHash, $id_bailleur]);
-    } else {
-        $stmt = $conn->prepare("UPDATE bailleurs SET nom = ?, email = ? WHERE id_bailleur = ?");
-        $stmt->execute([$nom, $email, $id_bailleur]);
+    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['photo']['tmp_name'];
+        $fileName = $_FILES['photo']['name'];
+        $fileSize = $_FILES['photo']['size'];
+        
+        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $extensionsAutorisees = ['jpg', 'jpeg', 'png', 'webp'];
+
+        if (in_array($fileExtension, $extensionsAutorisees)) {
+            if ($fileSize <= 2 * 1024 * 1024) { 
+                $uploadFileDir = __DIR__ . '/../../public/uploads/';
+                
+                if (!is_dir($uploadFileDir)) {
+                    mkdir($uploadFileDir, 0755, true);
+                }
+
+                $nouveauNomPhoto = 'bailleur_' . $id_bailleur . '_' . time() . '.' . $fileExtension;
+                $dest_path = $uploadFileDir . $nouveauNomPhoto;
+
+                if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                    if (!empty($profil['photo']) && file_exists($uploadFileDir . $profil['photo'])) {
+                        unlink($uploadFileDir . $profil['photo']);
+                    }
+                    $nom_photo = $nouveauNomPhoto;
+                } else {
+                    $error = "Erreur lors de l'enregistrement de l'image.";
+                }
+            } else {
+                $error = "L'image est trop lourde (max 2 Mo).";
+            }
+        } else {
+            $error = "Format invalide (JPG, JPEG, PNG, WEBP uniquement).";
+        }
     }
 
-    header("Location: parametres.php?success=1");
-    exit;
+    if (!$error) {
+        if (!empty($password)) {
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare("UPDATE bailleurs SET nom = ?, email = ?, mot_de_passe = ?, photo = ? WHERE id_bailleur = ?");
+            $stmt->execute([$nom, $email, $passwordHash, $nom_photo, $id_bailleur]);
+        } else {
+            $stmt = $conn->prepare("UPDATE bailleurs SET nom = ?, email = ?, photo = ? WHERE id_bailleur = ?");
+            $stmt->execute([$nom, $email, $nom_photo, $id_bailleur]);
+        }
+
+        header("Location: parametres.php?success=1");
+        exit;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -73,34 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; transition: background 0.3s; }
 
         /* MENU MOBILE */
-        .menu-btn {
-            display: none;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background: var(--blue);
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            z-index: 2000;
-            cursor: pointer;
-        }
+        .menu-btn { display: none; position: fixed; top: 15px; left: 15px; background: var(--blue); color: white; border: none; padding: 10px; border-radius: 8px; z-index: 2000; cursor: pointer; }
 
         /* SIDEBAR */
         aside { width: 220px; background: var(--white); display: flex; flex-direction: column; padding: 20px; transition: .3s; border-right: 1px solid var(--border); }
         aside img#logo { width: 150px; margin-bottom: 20px; }
-        aside a {
-            color: var(--text-soft);
-            text-decoration: none;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            transition: .3s;
-        }
+        aside a { color: var(--text-soft); text-decoration: none; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; transition: .3s; }
         aside a:hover { background: var(--blue-soft); color: var(--blue); }
 
         /* MAIN CONTENT */
@@ -112,20 +137,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         /* TABS SYSTEM */
         .tabs-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid var(--blue-soft); }
         .tabs { display: flex; gap: 5px; }
-        .tab-btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 10px 10px 0 0;
-            background: transparent;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
-            color: var(--text-soft);
-        }
+        .tab-btn { padding: 12px 20px; border: none; border-radius: 10px 10px 0 0; background: transparent; cursor: pointer; font-weight: 600; transition: 0.3s; color: var(--text-soft); }
         .tab-btn.active { background: var(--blue); color: white; }
-        
         .tab-content { display: none; background: var(--white); padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .tab-content.active { display: block; }
+
+        /* ZONE AVATAR INTERACTIVE ET DESIGN */
+        .profile-image-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: var(--blue);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            border: 3px solid var(--white);
+            outline: 2px solid var(--blue);
+            overflow: hidden;
+        }
+
+        .avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Masquer l'image si elle n'existe pas */
+        .avatar-wrapper img[src=""] {
+            display: none;
+        }
+
+        /* Bouton "Ajouter une photo" stylisé */
+        .upload-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--blue);
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .upload-label:hover { color: var(--blue-light); text-decoration: underline; }
+        .hidden-input { display: none; }
 
         /* THEME TOGGLE BUTTON */
         #themeToggle { background: var(--blue); color: white; border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.3s; }
@@ -135,44 +206,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .info-form { display: flex; flex-direction: column; gap: 15px; }
         .form-group { display: flex; flex-direction: column; gap: 5px; }
         .form-group label { font-weight: 600; font-size: 14px; }
-        .form-group input, .settings select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--white);
-            color: var(--text);
-            font-size: 15px;
-        }
-        .info-form button {
-            padding: 12px;
-            background: var(--blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-            transition: 0.3s;
-        }
+        .form-group input, .settings select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); color: var(--text); font-size: 15px; }
+        .info-form button { padding: 12px; background: var(--blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
         .info-form button:hover { background: var(--blue-light); }
 
         /* NOTIFICATIONS */
         .success { background: #d1fae5; color: #065f46; padding: 12px; margin-bottom: 15px; border-radius: 8px; font-weight: 600; }
+        .error-msg { background: #fee2e2; color: #991b1b; padding: 12px; margin-bottom: 15px; border-radius: 8px; font-weight: 600; }
 
-        /* SETTINGS & LISTS */
         .settings { display: flex; flex-direction: column; gap: 15px; }
         .settings label { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
         .settings input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
         ul { margin-left: 20px; line-height: 1.6; }
         li { margin-bottom: 8px; }
 
-        /* FOOTER */
         footer { text-align: center; padding: 20px; background: var(--white); margin-top: 40px; border-radius: 10px; font-size: 0.9em; color: var(--text-soft); border: 1px solid var(--border); }
         footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
         footer a:hover { color: var(--blue-light); }
 
-        /* RESPONSIVE */
         @media (max-width: 900px) {
             body { flex-direction: column; }
             .menu-btn { display: block; }
@@ -233,8 +284,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="success">Profil mis à jour avec succès.</div>
                 <?php endif; ?>
 
-                <form method="POST" class="info-form">
-                    <div class="form-group">
+                <?php if ($error): ?>
+                    <div class="error-msg"><?= htmlspecialchars($error) ?></div>
+                <?php endif; ?>
+
+                <form method="POST" enctype="multipart/form-data" class="info-form">
+                    
+                    <div class="profile-image-section">
+                        <div class="avatar-wrapper" id="avatarWrapper">
+                            <span id="avatarInitials"><?= $initiales ?></span>
+                            <img id="avatarImg" src="<?= $avatar_url ?>" alt="Avatar">
+                        </div>
+                        
+                        <label for="photo" class="upload-label">
+                            <i class="fas fa-camera"></i> Ajouter ou changer la photo
+                        </label>
+                        <input type="file" id="photo" name="photo" class="hidden-input" accept="image/png, image/jpeg, image/jpg, image/webp">
+                    </div>
+                <div class="form-group">
                         <label for="nom">Nom complet</label>
                         <input type="text" id="nom" name="nom" value="<?= htmlspecialchars($profil['nom'] ?? '') ?>" required>
                     </div>
@@ -271,14 +338,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <footer>
-  <p>&copy; 2026 RentMaster. Interface d'administration foncière. | 
-    <a href="mailto:divinekatende23@gmail.com">Support client</a> | 
-    <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Portfolio Développeur</a>
-  </p>
-</footer>
+          <p>&copy; 2026 RentMaster. Interface d'administration foncière. | 
+            <a href="mailto:divinekatende23@gmail.com">Support client</a> | 
+            <a href="https://divinekatende.github.io/DIVKT/" target="_blank">Portfolio Développeur</a>
+          </p>
+        </footer>
     </main>
 
     <script>
+    // Gestion de l'aperçu dynamique de la photo en JS direct
+    const photoInput = document.getElementById('photo');
+    const avatarImg = document.getElementById('avatarImg');
+    const avatarInitials = document.getElementById('avatarInitials');
+
+    photoInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.addEventListener('load', function() {
+                avatarImg.setAttribute('src', this.result);
+                avatarImg.style.display = 'block'; // On affiche la balise img
+            });
+            reader.readAsDataURL(file);
+        }
+    });
+
     // Gestion du basculement des onglets
     const tabs = document.querySelectorAll(".tab-btn");
     const contents = document.querySelectorAll(".tab-content");
@@ -294,14 +378,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
     });
 
-    // Fonction d'alternance du mode sombre (commune)
     function toggleDarkMode(isDark) {
         document.body.classList.toggle('dark', isDark);
         darkModeCheckbox.checked = isDark;
         themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
     }
 
-    // Sélecteurs d'éléments pour le thème
     const themeToggle = document.getElementById('themeToggle');
     const darkModeCheckbox = document.getElementById('darkModeSetting');
 
@@ -314,7 +396,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         toggleDarkMode(darkModeCheckbox.checked);
     });
 
-    // Menu Mobile
     const menuBtn = document.getElementById("menuBtn");
     const sidebar = document.getElementById("sidebar");
     menuBtn.addEventListener("click", () => sidebar.classList.toggle("show"));

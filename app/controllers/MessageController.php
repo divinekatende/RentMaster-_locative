@@ -34,7 +34,7 @@ class MessageController
     }
 
     /* =========================
-        RECUPERER MESSAGES
+        RÉCUPÉRER MESSAGES
     ========================= */
     public function getMessages($user_id, $user_type)
     {
@@ -60,29 +60,29 @@ class MessageController
     }
 
     /* =========================
-        CONTACTS AUTORISES
+        CONTACTS AUTORISÉS (CORRIGÉ ET SÉCURISÉ)
     ========================= */
     public function getContacts($user_id, $user_type)
     {
         if ($user_type === 'bailleur') {
-            // Un bailleur récupère la liste de tous ses locataires assignés
+            // Le bailleur récupère tous les locataires qui lui sont directement associés
             $sql = "
-                SELECT id_locataire AS id, nom, prenom 
+                SELECT DISTINCT id_locataire AS id, nom, prenom 
                 FROM locataires 
                 WHERE id_bailleur = ?
             ";
         } else {
-            // Un locataire récupère le bailleur qui lui est associé
+            // Le locataire récupère les informations du bailleur lié à son profil
             $sql = "
-                SELECT id_bailleur AS id, nom, prenom 
-                FROM bailleurs 
-                WHERE id_bailleur = ?
+                SELECT DISTINCT b.id_bailleur AS id, b.nom, b.prenom 
+                FROM bailleurs b
+                INNER JOIN locataires l ON b.id_bailleur = l.id_bailleur
+                WHERE l.id_locataire = ?
             ";
         }
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$user_id]);
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
